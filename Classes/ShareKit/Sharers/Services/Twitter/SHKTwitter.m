@@ -138,13 +138,16 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (BOOL)twitterFrameworkAvailable {
 	
-	BOOL result = NO;
-	
+    if ([SHKCONFIG(forcePreIOS5TwitterAccess) boolValue])
+    {
+        return NO;
+    }
+    
 	if (NSClassFromString(@"TWTweetComposeViewController")) {
-		result = YES;
+		return YES;
 	}
 	
-	return result;
+	return NO;
 }
 
 - (BOOL)prepareItem {
@@ -301,7 +304,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (void)showTwitterForm
 {
-	SHKFormControllerLargeTextField *rootView = [[SHKFormControllerLargeTextField alloc] initWithNibName:nil bundle:nil delegate:self];	
+	SHKCustomFormControllerLargeTextField *rootView = [[SHKCustomFormControllerLargeTextField alloc] initWithNibName:nil bundle:nil delegate:self];	
 	
 	rootView.text = [item customValueForKey:@"status"];
 	rootView.maxTextLength = 140;
@@ -316,7 +319,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	[[SHK currentHelper] showViewController:self];	
 }
 
-- (void)sendForm:(SHKFormControllerLargeTextField *)form
+- (void)sendForm:(SHKCustomFormControllerLargeTextField *)form
 {	
 	[item setCustomValue:form.textView.text forKey:@"status"];
 	[self tryToSend];

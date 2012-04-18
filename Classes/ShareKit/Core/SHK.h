@@ -49,7 +49,6 @@ extern NSString * const SHKHideCurrentViewFinishedNotification;
 	BOOL isDismissingView;
 	
 	NSOperationQueue *offlineQueue;
-    BOOL isStatusBarHiden;
 }
 
 @property (nonatomic, retain) UIViewController *currentView;

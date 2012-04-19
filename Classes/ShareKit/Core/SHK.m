@@ -112,6 +112,10 @@ BOOL SHKinit;
 - (void)showViewController:(UIViewController *)vc
 {	
 	self.currentRootViewController = [self getCurrentRootViewController];
+    
+    self->isStatusBarHiden = [UIApplication sharedApplication].statusBarHidden;
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    [[self.currentRootViewController navigationController] setNavigationBarHidden:NO];
 	
 	// Find the top most view controller being displayed (so we can add the modal view to it and not one that is hidden)
 	UIViewController *topViewController = [self getTopViewController:self.currentRootViewController];	
@@ -247,6 +251,9 @@ BOOL SHKinit;
 - (void)viewWasDismissed
 {
 	self.isDismissingView = NO;
+    
+    [[UIApplication sharedApplication] setStatusBarHidden:self->isStatusBarHiden];
+    [[self.currentRootViewController navigationController] setNavigationBarHidden:self->isStatusBarHiden];
 	
 	if (currentView != nil)
 		self.currentView = nil;

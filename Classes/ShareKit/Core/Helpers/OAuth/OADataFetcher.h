@@ -24,13 +24,13 @@
 //  THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
-#import "OAMutableURLRequest.h"
+//#import "OAMutableURLRequest.h"
 #import "OAServiceTicket.h"
 
 
 @interface OADataFetcher : NSObject {
 @private
-    OAMutableURLRequest *request;
+    NSMutableURLRequest *request;
     NSHTTPURLResponse *response;
     NSError *error;
     NSData *responseData;
@@ -39,6 +39,6 @@
     SEL didFailSelector;
 }
 
-- (void)fetchDataWithRequest:(OAMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
+- (void)fetchDataWithRequest:(NSMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
 
 @end

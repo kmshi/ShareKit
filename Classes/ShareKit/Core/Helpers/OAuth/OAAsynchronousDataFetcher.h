@@ -24,10 +24,10 @@
 
 #import <Foundation/Foundation.h>
 
-#import "OAMutableURLRequest.h"
+//#import "OAMutableURLRequest.h"
 
 @interface OAAsynchronousDataFetcher : NSObject {
-    OAMutableURLRequest *request;
+    NSMutableURLRequest *request;
     NSHTTPURLResponse *response;
     NSURLConnection *connection;
     NSMutableData *responseData;
@@ -36,8 +36,8 @@
     SEL didFailSelector;
 }
 
-+ (id)asynchronousFetcherWithRequest:(OAMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
-- (id)initWithRequest:(OAMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
++ (id)asynchronousFetcherWithRequest:(NSMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
+- (id)initWithRequest:(NSMutableURLRequest *)aRequest delegate:(id)aDelegate didFinishSelector:(SEL)finishSelector didFailSelector:(SEL)failSelector;
 
 - (void)start;
 - (void)cancel;

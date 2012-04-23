@@ -29,7 +29,7 @@
 
 @implementation OADataFetcher
 
-- (void)fetchDataWithRequest:(OAMutableURLRequest *)aRequest 
+- (void)fetchDataWithRequest:(NSMutableURLRequest *)aRequest 
 					delegate:(id)aDelegate 
 		   didFinishSelector:(SEL)finishSelector 
 			 didFailSelector:(SEL)failSelector 

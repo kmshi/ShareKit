@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		188D8A2C1545A34F00F18064 /* SHKOAuth2Sharer.m in Sources */ = {isa = PBXBuildFile; fileRef = 188D8A2B1545A34F00F18064 /* SHKOAuth2Sharer.m */; };
 		1913BF76138FF6A800AAD620 /* SHKEvernote.m in Sources */ = {isa = PBXBuildFile; fileRef = 4379F2B11291AC9700D2A41E /* SHKEvernote.m */; };
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -146,6 +147,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		188D8A2A1545A34F00F18064 /* SHKOAuth2Sharer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SHKOAuth2Sharer.h; sourceTree = "<group>"; };
+		188D8A2B1545A34F00F18064 /* SHKOAuth2Sharer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SHKOAuth2Sharer.m; sourceTree = "<group>"; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* ShareKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShareKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -671,6 +674,8 @@
 				43A5367711DBE3B9004A1712 /* SHKSharer.m */,
 				7A36F42514B2021100372747 /* SHKSharerDelegate.h */,
 				7A36F42614B2021100372747 /* SHKSharerDelegate.m */,
+				188D8A2A1545A34F00F18064 /* SHKOAuth2Sharer.h */,
+				188D8A2B1545A34F00F18064 /* SHKOAuth2Sharer.m */,
 			);
 			path = "Base Sharer Classes";
 			sourceTree = "<group>";
@@ -1367,6 +1372,7 @@
 				AC1A7B32152312DF009B9E6A /* SHKNetEaseWeibo.m in Sources */,
 				FDB495A41520349A00505A99 /* SHKReadability.m in Sources */,
 				7A5474E315455617000226FF /* SHKCustomFormControllerLargeTextField.m in Sources */,
+				188D8A2C1545A34F00F18064 /* SHKOAuth2Sharer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

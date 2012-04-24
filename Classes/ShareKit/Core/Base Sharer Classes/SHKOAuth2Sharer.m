@@ -10,18 +10,6 @@
 #import "NSHTTPCookieStorage+DeleteForURL.h"
 #import "JSONKit.h"
 
-// standard OAuth keys
-static NSString *const kOAuth2AccessTokenKey       = @"access_token";
-static NSString *const kOAuth2RefreshTokenKey      = @"refresh_token";
-static NSString *const kOAuth2ClientIDKey          = @"client_id";
-static NSString *const kOAuth2ClientSecretKey      = @"client_secret";
-static NSString *const kOAuth2RedirectURIKey       = @"redirect_uri";
-static NSString *const kOAuth2ResponseTypeKey      = @"response_type";
-static NSString *const kOAuth2ScopeKey             = @"scope";
-static NSString *const kOAuth2ErrorKey             = @"error";
-static NSString *const kOAuth2TokenTypeKey         = @"token_type";
-static NSString *const kOAuth2ExpiresInKey         = @"expires_in";
-static NSString *const kOAuth2CodeKey              = @"code";
 
 @implementation SHKOAuth2Sharer
 @synthesize clientID = clientID_,
@@ -73,6 +61,23 @@ expiresIn;
         NSString *encodedKey = [self encodedOAuthValueForString:key];
         [result appendFormat:@"%@%@=%@", joiner, encodedKey, encodedValue];
         joiner = @"&";
+    }
+    return result;
+}
+
++ (NSString *)scopeWithStrings:(NSString *)str, ... {
+    // concatenate the strings, joined by a single space
+    NSString *result = @"";
+    NSString *joiner = @"";
+    if (str) {
+        va_list argList;
+        va_start(argList, str);
+        while (str) {
+            result = [result stringByAppendingFormat:@"%@%@", joiner, str];
+            joiner = @" ";
+            str = va_arg(argList, id);
+        }
+        va_end(argList);
     }
     return result;
 }

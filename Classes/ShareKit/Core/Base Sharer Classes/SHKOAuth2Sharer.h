@@ -12,6 +12,20 @@
 #import "SHKOAuthView.h"
 #import "OAuthConsumer.h"
 
+// standard OAuth keys
+static NSString *const kOAuth2AccessTokenKey       = @"access_token";
+static NSString *const kOAuth2RefreshTokenKey      = @"refresh_token";
+static NSString *const kOAuth2ClientIDKey          = @"client_id";
+static NSString *const kOAuth2ClientSecretKey      = @"client_secret";
+static NSString *const kOAuth2RedirectURIKey       = @"redirect_uri";
+static NSString *const kOAuth2ResponseTypeKey      = @"response_type";
+static NSString *const kOAuth2ScopeKey             = @"scope";
+static NSString *const kOAuth2ErrorKey             = @"error";
+static NSString *const kOAuth2TokenTypeKey         = @"token_type";
+static NSString *const kOAuth2ExpiresInKey         = @"expires_in";
+static NSString *const kOAuth2CodeKey              = @"code";
+
+
 @interface SHKOAuth2Sharer : SHKSharer{
 @private
     NSString *clientID_;
@@ -64,6 +78,7 @@
 #pragma mark Utility Routines
 + (NSString *)encodedOAuthValueForString:(NSString *)str;
 + (NSString *)encodedQueryParametersForDictionary:(NSDictionary *)dict;
++ (NSString *)scopeWithStrings:(NSString *)firsStr, ... NS_REQUIRES_NIL_TERMINATION;
 
 + (void)deleteStoredRefreshToken;
 + (void)logout;

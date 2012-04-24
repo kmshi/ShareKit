@@ -8,6 +8,7 @@
 
 #import "SHKOAuth2Sharer.h"
 #import "NSHTTPCookieStorage+DeleteForURL.h"
+#import "JSONKit.h"
 
 // standard OAuth keys
 static NSString *const kOAuth2AccessTokenKey       = @"access_token";
@@ -27,6 +28,7 @@ static NSString *const kOAuth2CodeKey              = @"code";
 clientSecret = clientSecret_,
 redirectURI = redirectURI_,
 parameters = parameters_,
+authorizationURL = authorizationURL_,
 tokenURL = tokenURL_,
 expirationDate = expirationDate_,
 additionalTokenRequestParameters = additionalTokenRequestParameters_;
@@ -61,7 +63,7 @@ expiresIn;
 }
 
 + (NSString *)encodedQueryParametersForDictionary:(NSDictionary *)dict {
-    // Make a string like "cat=fluffy@dog=spot"
+    // Make a string like "cat=fluffy&dog=spot"
     NSMutableString *result = [NSMutableString string];
     NSArray *sortedKeys = [[dict allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     NSString *joiner = @"";
@@ -79,6 +81,7 @@ expiresIn;
     self = [super init];
     if (self) {
         parameters_ = [[NSMutableDictionary alloc] init];
+        additionalTokenRequestParameters_ = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -88,12 +91,123 @@ expiresIn;
     [clientSecret_ release];
     [redirectURI_ release];
     [parameters_ release];
+    [authorizationURL_ release];
     [tokenURL_ release];
     [expirationDate_ release];
     [additionalTokenRequestParameters_ release];
     
     [super dealloc];
 }
+
+#pragma mark -
+#pragma mark Authorization
+
+- (BOOL)isAuthorized
+{		
+	return [self restoreRefreshToken];
+}
+
+- (void)promptAuthorization
+{		
+	[self tokenAuthorize];
+}
+
+- (void)storeRefreshToken{
+    [SHK setAuthValue:self.refreshToken
+               forKey:kOAuth2RefreshTokenKey
+            forSharer:[self sharerId]];
+}
+
+- (BOOL)restoreRefreshToken{
+    self.refreshToken = [SHK getAuthValueForKey:kOAuth2RefreshTokenKey
+                                  forSharer:[self sharerId]];
+    if (self.refreshToken) {
+        return YES;
+    }
+    
+    return NO;
+}
+
++ (void)deleteStoredRefreshToken
+{
+	NSString *sharerId = [self sharerId];
+	
+	[SHK removeAuthValueForKey:kOAuth2RefreshTokenKey forSharer:sharerId];
+}
+
++ (void)logout
+{
+	[self deleteStoredRefreshToken];
+	
+	// Clear cookies (for OAuth, doesn't affect XAuth)
+	// TODO - move the authorizeURL out of the init call (into a define) so we don't have to create an object just to get it
+	SHKOAuth2Sharer *sharer = [[self alloc] init];
+	if (sharer.authorizationURL)
+	{
+		[NSHTTPCookieStorage deleteCookiesForURL:sharer.authorizationURL];
+    }
+	[sharer release];
+}
+
+
+- (void)refreshAccessToken{
+    self.pendingAction = SHKPendingRefreshToken;
+    [self tokenAccess];
+}
+
+#pragma mark Authorize 
+
+- (void)tokenAuthorize
+{	
+	NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@?client_id=%@&scope=%@&response_type=code&redirect_uri=%@", authorizationURL_.absoluteString, clientID_,self.scope,redirectURI_]];
+    
+	SHKOAuthView *auth = [[SHKOAuthView alloc] initWithURL:url delegate:self];
+	[[SHK currentHelper] showViewController:auth];	
+	[auth release];
+}
+
+- (void)tokenAuthorizeView:(SHKOAuthView *)authView didFinishWithSuccess:(BOOL)success queryParams:(NSMutableDictionary *)queryParams error:(NSError *)error;
+{
+	[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+	
+	if (!success)
+	{
+		[[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Authorize Error")
+									 message:error!=nil?[error localizedDescription]:SHKLocalizedString(@"There was an error while authorizing")
+									delegate:nil
+						   cancelButtonTitle:SHKLocalizedString(@"Close")
+						   otherButtonTitles:nil] autorelease] show];
+		[self authDidFinish:success];
+	}	
+	
+	else if ([queryParams objectForKey:kOAuth2ErrorKey])
+	{
+		SHKLog(@"oauth_problem reported: %@", [queryParams objectForKey:kOAuth2ErrorKey]);
+        
+		[[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Authorize Error")
+									 message:error!=nil?[error localizedDescription]:SHKLocalizedString(@"There was an error while authorizing")
+									delegate:nil
+						   cancelButtonTitle:SHKLocalizedString(@"Close")
+						   otherButtonTitles:nil] autorelease] show];
+		success = NO;
+		[self authDidFinish:success];
+	}
+    
+	else 
+	{
+		[self setKeysForResponseDictionary:queryParams];
+		
+		[self tokenAccess];
+	}
+}
+
+- (void)tokenAuthorizeCancelledView:(SHKOAuthView *)authView
+{
+	[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+	[self authDidFinish:NO];
+}
+
+
 
 - (void)setKeysForResponseDictionary:(NSDictionary *)dict {
     if (dict == nil) return;
@@ -131,58 +245,10 @@ expiresIn;
 
 
 - (void)setKeysForResponseJSONData:(NSData *)data {
-    NSDictionary *dict = [self dictionaryWithJSONData:data];
+    NSDictionary *dict = [data objectFromJSONData];
     [self setKeysForResponseDictionary:dict];
 }
 
-- (NSDictionary *)dictionaryWithJSONData:(NSData *)data {
-    NSMutableDictionary *obj = nil;
-    NSError *error = nil;
-    
-    Class serializer = NSClassFromString(@"NSJSONSerialization");
-    if (serializer) {
-        const NSUInteger kOpts = (1UL << 0); // NSJSONReadingMutableContainers
-        obj = [serializer JSONObjectWithData:data
-                                     options:kOpts
-                                       error:&error];
-#if DEBUG
-        if (error) {
-            NSString *str = [[[NSString alloc] initWithData:data
-                                                   encoding:NSUTF8StringEncoding] autorelease];
-            NSLog(@"NSJSONSerialization error %@ parsing %@",
-                  error, str);
-        }
-#endif
-        return obj;
-    } 
-//    else {
-//        // try SBJsonParser or SBJSON
-//        Class jsonParseClass = NSClassFromString(@"SBJsonParser");
-//        if (!jsonParseClass) {
-//            jsonParseClass = NSClassFromString(@"SBJSON");
-//        }
-//        if (jsonParseClass) {
-//            GTMOAuth2ParserClass *parser = [[[jsonParseClass alloc] init] autorelease];
-//            NSString *jsonStr = [[[NSString alloc] initWithData:data
-//                                                       encoding:NSUTF8StringEncoding] autorelease];
-//            if (jsonStr) {
-//                obj = [parser objectWithString:jsonStr error:&error];
-//#if DEBUG
-//                if (error) {
-//                    NSLog(@"%@ error %@ parsing %@", NSStringFromClass(jsonParseClass),
-//                          error, jsonStr);
-//                }
-//#endif
-//                return obj;
-//            }
-//        } else {
-//#if DEBUG
-//            NSAssert(0, @"GTMOAuth2Authentication: No parser available");
-//#endif
-//        }
-//    }
-    return nil;
-}
 
 - (BOOL)shouldRefreshAccessToken {
     // We should refresh the access token when it's missing or nearly expired
@@ -265,6 +331,8 @@ expiresIn;
     
     NSURL *tokenURL = self.tokenURL;
     
+    [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Authenticating...")];
+    
     NSMutableURLRequest *oRequest = [NSMutableURLRequest requestWithURL:tokenURL];
     [oRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
     
@@ -279,7 +347,12 @@ expiresIn;
 }
 
 - (void)requestTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
-    [self setKeysForResponseJSONData:data];
+    [[SHKActivityIndicator currentIndicator] hide];
+    if (ticket.didSucceed){
+        [self setKeysForResponseJSONData:data];
+        [self storeRefreshToken];
+        
+        [self tryPendingAction];
 #if DEBUG
     // Watch for token exchanges that return a non-bearer or unlabeled token
     NSString *tokenType = [self tokenType];
@@ -287,12 +360,24 @@ expiresIn;
         || [tokenType caseInsensitiveCompare:@"bearer"] != NSOrderedSame) {
         NSLog(@"GTMOAuth2: Unexpected token type: %@", tokenType);
     }
-#endif    
+#endif  
+    }else{
+		// TODO - better error handling here
+		[self requestTicket:ticket didFailWithError:[SHK error:SHKLocalizedString(@"There was a problem requesting access from %@", [self sharerTitle])]];
+    }
+	[self authDidFinish:ticket.didSucceed];
 }
 
 
 - (void)requestTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error{
+    [[SHKActivityIndicator currentIndicator] hide];
     
+    [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Access Error")
+								 message:error!=nil?[error localizedDescription]:SHKLocalizedString(@"There was an error while sharing")
+								delegate:nil
+					   cancelButtonTitle:SHKLocalizedString(@"Close")
+					   otherButtonTitles:nil] autorelease] show];
+
 }
 
 

@@ -20,6 +20,7 @@
     NSMutableDictionary *parameters_;
     
     // authorization parameters
+    NSURL *authorizationURL_;
     NSURL *tokenURL_;
     NSDate *expirationDate_;
     
@@ -39,7 +40,8 @@
 @property (copy) NSString *tokenType;
 
 // Apps may optionally add parameters here to be provided to the token
-// endpoint on token requests and refreshes
+// endpoint on token requests and refreshes, like live.com use https://oauth.live.com/desktop 
+// as redirect_uri for mobile token refresh
 @property (retain) NSDictionary *additionalTokenRequestParameters;
 
 // Response properties
@@ -52,6 +54,7 @@
 @property (retain) NSString *errorString;
 
 // URL for obtaining access tokens
+@property (copy) NSURL *authorizationURL;
 @property (copy) NSURL *tokenURL;
 
 // Calculated expiration date (expiresIn seconds added to the
@@ -62,11 +65,20 @@
 + (NSString *)encodedOAuthValueForString:(NSString *)str;
 + (NSString *)encodedQueryParametersForDictionary:(NSDictionary *)dict;
 
++ (void)deleteStoredRefreshToken;
++ (void)logout;
+
 - (void)setKeysForResponseDictionary:(NSDictionary *)dict;
 - (void)setKeysForResponseJSONData:(NSData *)data;
-- (NSDictionary *)dictionaryWithJSONData:(NSData *)data;
-- (BOOL)shouldRefreshAccessToken;
+
+- (void)tokenAuthorize;
 - (void)tokenAccess;
 - (void)requestTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)requestTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
+- (void)storeRefreshToken;
+- (BOOL)restoreRefreshToken;
+- (BOOL)shouldRefreshAccessToken;
+- (void)refreshAccessToken;
+
 @end

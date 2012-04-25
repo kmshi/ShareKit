@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		188C7085154704EB00A092F7 /* SHKGooglePlus.m in Sources */ = {isa = PBXBuildFile; fileRef = 188C7084154704EB00A092F7 /* SHKGooglePlus.m */; };
 		188D8A2C1545A34F00F18064 /* SHKOAuth2Sharer.m in Sources */ = {isa = PBXBuildFile; fileRef = 188D8A2B1545A34F00F18064 /* SHKOAuth2Sharer.m */; };
 		1913BF76138FF6A800AAD620 /* SHKEvernote.m in Sources */ = {isa = PBXBuildFile; fileRef = 4379F2B11291AC9700D2A41E /* SHKEvernote.m */; };
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
@@ -147,6 +148,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		188C7083154704EB00A092F7 /* SHKGooglePlus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SHKGooglePlus.h; path = "Google+/SHKGooglePlus.h"; sourceTree = "<group>"; };
+		188C7084154704EB00A092F7 /* SHKGooglePlus.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SHKGooglePlus.m; path = "Google+/SHKGooglePlus.m"; sourceTree = "<group>"; };
 		188D8A2A1545A34F00F18064 /* SHKOAuth2Sharer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SHKOAuth2Sharer.h; sourceTree = "<group>"; };
 		188D8A2B1545A34F00F18064 /* SHKOAuth2Sharer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SHKOAuth2Sharer.m; sourceTree = "<group>"; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -444,6 +447,15 @@
 				4362EB3311B9937300E3DB3A /* Example Project */,
 			);
 			path = Classes;
+			sourceTree = "<group>";
+		};
+		188C70811547047A00A092F7 /* Google+ */ = {
+			isa = PBXGroup;
+			children = (
+				188C7083154704EB00A092F7 /* SHKGooglePlus.h */,
+				188C7084154704EB00A092F7 /* SHKGooglePlus.m */,
+			);
+			name = "Google+";
 			sourceTree = "<group>";
 		};
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
@@ -848,6 +860,7 @@
 		43A536C011DBE3B9004A1712 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				188C70811547047A00A092F7 /* Google+ */,
 				ACC4336B1512CD1C00B2953E /* Douban */,
 				AC1A7B271522C15B009B9E6A /* Sina Weibo */,
 				AC1A7B2F152312DE009B9E6A /* NetEase Weibo */,
@@ -1373,6 +1386,7 @@
 				FDB495A41520349A00505A99 /* SHKReadability.m in Sources */,
 				7A5474E315455617000226FF /* SHKCustomFormControllerLargeTextField.m in Sources */,
 				188D8A2C1545A34F00F18064 /* SHKOAuth2Sharer.m in Sources */,
+				188C7085154704EB00A092F7 /* SHKGooglePlus.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

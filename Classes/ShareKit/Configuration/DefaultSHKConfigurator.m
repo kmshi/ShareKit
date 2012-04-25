@@ -59,6 +59,17 @@
  leaving that decision up to the user.
  */
 
+//Google+
+- (NSString*)googleplusConsumerKey{
+   return @""; 
+}
+- (NSString*)googleplusConsumerSecret{
+   return @"";
+}
+- (NSString*)googleplusCallbackUrl{
+   return @""; 
+}
+
 // Sina Weibo 
 - (NSString*)sinaWeiboConsumerKey {
 	return @"";

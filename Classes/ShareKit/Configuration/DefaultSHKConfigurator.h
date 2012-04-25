@@ -50,6 +50,9 @@
 - (NSArray*)defaultFavoriteImageSharers;
 - (NSArray*)defaultFavoriteTextSharers;
 - (NSArray*)defaultFavoriteFileSharers;
+- (NSString*)googleplusConsumerKey;
+- (NSString*)googleplusConsumerSecret;
+- (NSString*)googleplusCallbackUrl;
 - (NSString*)sinaWeiboConsumerKey;
 - (NSString*)sinaWeiboConsumerSecret;
 - (NSString*)sinaWeiboCallbackUrl;

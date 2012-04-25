@@ -96,4 +96,5 @@ static NSString *const kOAuth2CodeKey              = @"code";
 - (BOOL)shouldRefreshAccessToken;
 - (void)refreshAccessToken;
 
+- (NSURL *)authorizeCallbackURL;
 @end

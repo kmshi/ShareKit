@@ -47,8 +47,10 @@
 
 - (void)start
 {    
-    [request prepare];
-	
+    if ([request respondsToSelector:@selector(prepare)]) {
+        [request prepare];
+    }
+    
 	if (connection)
 		[connection release];
 	

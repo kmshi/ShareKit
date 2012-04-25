@@ -118,14 +118,15 @@ expiresIn;
 }
 
 - (void)storeRefreshToken{
-    [SHK setAuthValue:self.refreshToken
-               forKey:kOAuth2RefreshTokenKey
-            forSharer:[self sharerId]];
+    [SHK setAuthValue:self.refreshToken forKey:kOAuth2RefreshTokenKey forSharer:[self sharerId]];
+    [SHK setAuthValue:self.accessToken forKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
+    [SHK setAuthValue:[self.expiresIn stringValue] forKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
 }
 
 - (BOOL)restoreRefreshToken{
-    self.refreshToken = [SHK getAuthValueForKey:kOAuth2RefreshTokenKey
-                                  forSharer:[self sharerId]];
+    self.refreshToken = [SHK getAuthValueForKey:kOAuth2RefreshTokenKey forSharer:[self sharerId]];
+    self.accessToken = [SHK getAuthValueForKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
+    self.expiresIn = [NSNumber numberWithInt:[[SHK getAuthValueForKey:kOAuth2ExpiresInKey forSharer:[self sharerId]] intValue]];
     if (self.refreshToken) {
         return YES;
     }
@@ -138,6 +139,8 @@ expiresIn;
 	NSString *sharerId = [self sharerId];
 	
 	[SHK removeAuthValueForKey:kOAuth2RefreshTokenKey forSharer:sharerId];
+    [SHK removeAuthValueForKey:kOAuth2AccessTokenKey forSharer:sharerId];
+    [SHK removeAuthValueForKey:kOAuth2ExpiresInKey forSharer:sharerId];
 }
 
 + (void)logout
@@ -164,8 +167,22 @@ expiresIn;
 
 - (void)tokenAuthorize
 {	
-	NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@?client_id=%@&scope=%@&response_type=code&redirect_uri=%@", authorizationURL_.absoluteString, clientID_,self.scope,redirectURI_]];
+    NSMutableDictionary *paramsDict = [NSMutableDictionary dictionary];
     
+    [paramsDict setObject:self.clientID forKey:@"client_id"];
+    [paramsDict setObject:self.scope forKey:@"scope"];
+    [paramsDict setObject:@"code" forKey:@"response_type"];
+    [paramsDict setObject:self.redirectURI forKey:@"redirect_uri"];
+    
+    if (self.parameters) {
+        [paramsDict addEntriesFromDictionary:self.parameters];
+    }
+    
+    NSString *paramStr = [[self class] encodedQueryParametersForDictionary:paramsDict];
+
+	NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@?%@", authorizationURL_.absoluteString, paramStr]];
+    
+    SHKLog(@"Authorize url:%@",url.absoluteString);
 	SHKOAuthView *auth = [[SHKOAuthView alloc] initWithURL:url delegate:self];
 	[[SHK currentHelper] showViewController:auth];	
 	[auth release];
@@ -215,6 +232,7 @@ expiresIn;
 
 
 - (void)setKeysForResponseDictionary:(NSDictionary *)dict {
+    SHKLog(@"%@",dict);
     if (dict == nil) return;
     
     // If a new code or access token is being set, remove the old expiration
@@ -332,6 +350,7 @@ expiresIn;
     }
     
     NSString *paramStr = [[self class] encodedQueryParametersForDictionary:paramsDict];
+    SHKLog(@"tokenUrl:%@?%@",tokenURL_.absoluteString,paramStr);
     NSData *paramData = [paramStr dataUsingEncoding:NSUTF8StringEncoding];
     
     NSURL *tokenURL = self.tokenURL;
@@ -459,4 +478,7 @@ expiresIn;
     self.expirationDate = date;
 }
 
+- (NSURL *)authorizeCallbackURL{
+    return [NSURL URLWithString:redirectURI_];
+}
 @end

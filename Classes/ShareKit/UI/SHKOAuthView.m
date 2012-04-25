@@ -82,7 +82,7 @@
 {		
 	if ([request.URL.absoluteString rangeOfString:@"authorize"].location == NSNotFound
         && [request.URL.absoluteString rangeOfString:@"authenticate"].location == NSNotFound
-        && [request.URL.absoluteString rangeOfString:[delegate authorizeCallbackURL].absoluteString options:NSCaseInsensitiveSearch].location != NSNotFound)
+        && [request.URL.absoluteString rangeOfString:[delegate authorizeCallbackURL].absoluteString options:NSCaseInsensitiveSearch].location == 0)
 	{
 		// Get query
 		NSMutableDictionary *queryParams = nil;

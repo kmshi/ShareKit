@@ -2,6 +2,8 @@
 //  SHKGooglePlus.m
 //  ShareKit
 //
+//  --Currently google only make readonly api public, send status/image/url functions are still not available
+//
 //  Created by kshi on 12-4-24.
 //  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
 //
@@ -27,6 +29,8 @@
 		self.authorizationURL = [NSURL URLWithString:@"https://accounts.google.com/o/oauth2/auth"];
 		self.tokenURL = [NSURL URLWithString:@"https://accounts.google.com/o/oauth2/token"];
         self.scope = [[self class] scopeWithStrings:@"https://www.googleapis.com/auth/urlshortener",@"https://www.googleapis.com/auth/plus.me", nil];
+        
+        [self.parameters setValue:@"offline" forKey:@"access_type"];
         
         //[self.additionalTokenRequestParameters setValue:@"https://oauth.live.com/desktop" forKey:kOAuth2RedirectURIKey];
 	}	
@@ -125,11 +129,15 @@
     if ([item customValueForKey:@"status"]==nil) {
         return NO;
     }
-    SHKLog(@"to send status:%@",[item customValueForKey:@"status"]);
     if ([self shouldRefreshAccessToken]) {
         [self refreshAccessToken];
         return YES;
     }
+    
+    //Google currently only expose readonly apis, staytuned...
+    
+    SHKLog(@"to send status:%@",[item customValueForKey:@"status"]);
+    
     return YES;
 }
 @end

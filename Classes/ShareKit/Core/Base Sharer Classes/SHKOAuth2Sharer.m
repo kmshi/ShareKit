@@ -124,9 +124,12 @@ expiresIn;
 }
 
 - (BOOL)restoreRefreshToken{
-    self.refreshToken = [SHK getAuthValueForKey:kOAuth2RefreshTokenKey forSharer:[self sharerId]];
-    self.accessToken = [SHK getAuthValueForKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
-    self.expiresIn = [NSNumber numberWithInt:[[SHK getAuthValueForKey:kOAuth2ExpiresInKey forSharer:[self sharerId]] intValue]];
+    NSString* refreshToken = [SHK getAuthValueForKey:kOAuth2RefreshTokenKey forSharer:[self sharerId]];
+    if (refreshToken) self.refreshToken = refreshToken;
+    NSString* accessToken = [SHK getAuthValueForKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
+    if (accessToken)  self.accessToken = accessToken;
+    NSString* expiresIn = [SHK getAuthValueForKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
+    if (expiresIn) self.expiresIn = [NSNumber numberWithInt:[expiresIn intValue]];
     if (self.refreshToken) {
         return YES;
     }
@@ -382,7 +385,7 @@ expiresIn;
     NSString *tokenType = [self tokenType];
     if (tokenType == nil
         || [tokenType caseInsensitiveCompare:@"bearer"] != NSOrderedSame) {
-        NSLog(@"GTMOAuth2: Unexpected token type: %@", tokenType);
+        NSLog(@"Unexpected token type: %@", tokenType);
     }
 #endif  
     }else{

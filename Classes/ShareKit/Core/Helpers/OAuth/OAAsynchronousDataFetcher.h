@@ -24,7 +24,7 @@
 
 #import <Foundation/Foundation.h>
 
-//#import "OAMutableURLRequest.h"
+#import "OAMutableURLRequest.h"
 
 @interface OAAsynchronousDataFetcher : NSObject {
     NSMutableURLRequest *request;

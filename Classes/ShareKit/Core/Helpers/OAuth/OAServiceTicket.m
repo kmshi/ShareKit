@@ -30,12 +30,12 @@
 @implementation OAServiceTicket
 @synthesize request, response, data, didSucceed;
 
-- (id)initWithRequest:(OAMutableURLRequest *)aRequest response:(NSHTTPURLResponse *)aResponse didSucceed:(BOOL)success 
+- (id)initWithRequest:(NSMutableURLRequest *)aRequest response:(NSHTTPURLResponse *)aResponse didSucceed:(BOOL)success 
 {
 	return [self initWithRequest:aRequest response:aResponse data:nil didSucceed:success];
 }
 
-- (id)initWithRequest:(OAMutableURLRequest *)aRequest response:(NSHTTPURLResponse *)aResponse data:(NSData *)aData didSucceed:(BOOL)success {
+- (id)initWithRequest:(NSMutableURLRequest *)aRequest response:(NSHTTPURLResponse *)aResponse data:(NSData *)aData didSucceed:(BOOL)success {
     
     self = [super init];
     if (self) {

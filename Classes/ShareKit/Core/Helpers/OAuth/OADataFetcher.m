@@ -39,7 +39,9 @@
     didFinishSelector = finishSelector;
     didFailSelector = failSelector;
     
-    [request prepare];
+    if ([request respondsToSelector:@selector(prepare)]) {
+        [(OAMutableURLRequest*)request prepare];
+    }
     
     responseData = [NSURLConnection sendSynchronousRequest:request
                                          returningResponse:&response

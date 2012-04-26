@@ -48,7 +48,7 @@
 - (void)start
 {    
     if ([request respondsToSelector:@selector(prepare)]) {
-        [request prepare];
+        [(OAMutableURLRequest*)request prepare];
     }
     
 	if (connection)

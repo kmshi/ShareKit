@@ -357,8 +357,8 @@ expiresIn;
     NSData *paramData = [paramStr dataUsingEncoding:NSUTF8StringEncoding];
     
     NSURL *tokenURL = self.tokenURL;
-    
-    [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Authenticating...")];
+    if (!self.quiet)
+        [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Authenticating...")];
     
     NSMutableURLRequest *oRequest = [NSMutableURLRequest requestWithURL:tokenURL];
     [oRequest setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];

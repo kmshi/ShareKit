@@ -656,6 +656,17 @@ static NSDictionary *sharersDictionary = nil;
 	return !(netStatus == NotReachable);
 }
 
++ (BOOL)isNetworkReachableViaWWAN
+{
+	return ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == ReachableViaWWAN);	
+}
+
++ (BOOL)isNetworkReachableViaWIFI
+{
+	return ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == ReachableViaWiFi);	
+}
+
+
 #pragma mark -
 #pragma mark Singleton System Overrides
 

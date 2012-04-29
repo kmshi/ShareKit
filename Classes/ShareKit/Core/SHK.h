@@ -121,7 +121,8 @@ extern NSString * const SHKHideCurrentViewFinishedNotification;
 #pragma mark Network
 
 + (BOOL)connected;
-
++ (BOOL)isNetworkReachableViaWWAN;
++ (BOOL)isNetworkReachableViaWIFI;
 @end
 
 NSString * SHKStringOrBlank(NSString * value);

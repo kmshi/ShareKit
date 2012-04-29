@@ -726,6 +726,8 @@
     if ([self.shareDelegate respondsToSelector:@selector(sharerFinishedSending:)]){
 		[self.shareDelegate performSelector:@selector(sharerFinishedSending:) withObject:self];
 	}
+    
+    [SHK addCoins:2];
     if (!self.quiet) {
         [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayCompleted:) withObject:@"You got 2 coins!" afterDelay:2];
     }

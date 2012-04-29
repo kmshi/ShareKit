@@ -679,7 +679,6 @@ static NSDictionary *sharersDictionary = nil;
 + (void) setCoins:(NSInteger)num{
     NSNumber* pNum = [NSNumber numberWithInteger:num];
     [SHK setAuthValue:[pNum stringValue] forKey:@"count" forSharer:@"coins"];
-    TTDINFO(@"send out CoinsUpdatedNotification, total coins are :%i",num);
     [[NSNotificationCenter defaultCenter] postNotificationName:CoinsUpdatedNotification object:pNum];
     
 }

@@ -723,9 +723,13 @@
 {	
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"SHKSendDidFinish" object:self];
 
-    if ([self.shareDelegate respondsToSelector:@selector(sharerFinishedSending:)])
+    if ([self.shareDelegate respondsToSelector:@selector(sharerFinishedSending:)]){
 		[self.shareDelegate performSelector:@selector(sharerFinishedSending:) withObject:self];
 	}
+    if (!self.quiet) {
+        [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayCompleted:) withObject:@"You got 2 coins!" afterDelay:2];
+    }
+}
 
 - (void)shouldReloginWithPendingAction:(SHKSharerPendingAction)action
 {

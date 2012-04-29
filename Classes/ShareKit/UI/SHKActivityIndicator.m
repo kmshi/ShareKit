@@ -102,7 +102,7 @@ static SHKActivityIndicator *_currentIndicator = nil;
 
 - (void)hideAfterDelay
 {
-	[self performSelector:@selector(hide) withObject:nil afterDelay:0.6];
+	[self performSelector:@selector(hide) withObject:nil afterDelay:1.2];
 }
 
 - (void)hide

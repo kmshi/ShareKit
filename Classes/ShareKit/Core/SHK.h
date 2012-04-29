@@ -37,6 +37,7 @@
 #import "UIWebView+SHK.h"
 
 extern NSString * const SHKHideCurrentViewFinishedNotification;
+extern NSString *const CoinsUpdatedNotification;
 
 @class SHKActionSheet;
 @class SHKViewControllerWrapper;
@@ -123,6 +124,12 @@ extern NSString * const SHKHideCurrentViewFinishedNotification;
 + (BOOL)connected;
 + (BOOL)isNetworkReachableViaWWAN;
 + (BOOL)isNetworkReachableViaWIFI;
+
+#pragma mark - Coins storage
++ (NSInteger) getCoins;
++ (void) setCoins:(NSInteger)num;
++ (void) addCoins:(NSInteger)num;
+
 @end
 
 NSString * SHKStringOrBlank(NSString * value);

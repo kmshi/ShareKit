@@ -40,6 +40,7 @@
 
 NSString * SHKLocalizedStringFormat(NSString* key);
 NSString * const SHKHideCurrentViewFinishedNotification = @"SHKHideCurrentViewFinished";
+NSString * const CoinsUpdatedNotification = @"CoinsUpdatedNotification";
 
 @interface SHK ()
 
@@ -664,6 +665,28 @@ static NSDictionary *sharersDictionary = nil;
 + (BOOL)isNetworkReachableViaWIFI
 {
 	return ([[Reachability reachabilityForInternetConnection] currentReachabilityStatus] == ReachableViaWiFi);	
+}
+
+#pragma mark - Coins storage
++ (NSInteger) getCoins{
+    NSString* strNum = [SHK getAuthValueForKey:@"count" forSharer:@"coins"];
+    if (strNum) {
+        return [strNum integerValue];
+    }
+    return 0;
+}
+
++ (void) setCoins:(NSInteger)num{
+    NSNumber* pNum = [NSNumber numberWithInteger:num];
+    [SHK setAuthValue:[pNum stringValue] forKey:@"count" forSharer:@"coins"];
+    TTDINFO(@"send out CoinsUpdatedNotification, total coins are :%i",num);
+    [[NSNotificationCenter defaultCenter] postNotificationName:CoinsUpdatedNotification object:pNum];
+    
+}
+
++ (void) addCoins:(NSInteger)num{
+    NSInteger cur = [self getCoins];
+    [self setCoins:(cur+num)];
 }
 
 

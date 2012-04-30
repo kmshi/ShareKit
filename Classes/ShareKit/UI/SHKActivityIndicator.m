@@ -170,7 +170,18 @@ static SHKActivityIndicator *_currentIndicator = nil;
 
 - (void)displayGift:(NSString *)m
 {	
-	[self setCenterMessage:@"\ue112"];
+    //Use Apple emoji characters: http://www.easyapns.com/iphone-emoji-alerts
+    //Not True! iOS devices sold in China may display certain emoji characters as squares.--http://support.apple.com/kb/ts2450
+    //iOS5 use Unicode 6.0 characters,and iOS4.x use Softbank PUA characters, 
+    //there was a mapping:http://opensource.apple.com/source/ICU/ICU-461.13/icuSources/data/translit/Any_SoftbankSMS.txt
+    //\U0001F4B0 ↔ \uE12F ;\U0001F381 ↔ \uE112 ;
+    
+    if ([[UIDevice currentDevice].systemVersion versionStringCompare:@"5.0"]==NSOrderedAscending) {
+        [self setCenterMessage:@"\uE112"];
+    }else {
+        [self setCenterMessage:@"\U0001F381"];
+    }
+	
 	[self setSubMessage:m];
 	
 	[spinner removeFromSuperview];

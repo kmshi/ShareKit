@@ -168,6 +168,23 @@ static SHKActivityIndicator *_currentIndicator = nil;
 	[self hideAfterDelay];
 }
 
+- (void)displayGift:(NSString *)m
+{	
+	[self setCenterMessage:@"\ue112"];
+	[self setSubMessage:m];
+	
+	[spinner removeFromSuperview];
+	self.spinner = nil;
+	
+	if ([self superview] == nil)
+		[self show];
+	else
+		[self persist];
+    
+	[self hideAfterDelay];
+}
+
+
 - (void)setCenterMessage:(NSString *)message
 {	
 	if (message == nil && centerMessageLabel != nil)

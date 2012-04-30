@@ -57,5 +57,5 @@
 - (void)hideSpinner;
 - (void)setProperRotation;
 - (void)setProperRotation:(BOOL)animated;
-
+- (void)displayGift:(NSString *)m;
 @end

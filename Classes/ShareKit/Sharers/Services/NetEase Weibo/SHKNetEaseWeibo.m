@@ -486,7 +486,7 @@
 														   signatureProvider:nil];
 	
 	[oRequest setHTTPMethod:@"POST"];
-    OARequestParameter *statusParam = [[OARequestParameter alloc] initWithName:@"id"
+    OARequestParameter *statusParam = [[OARequestParameter alloc] initWithName:@"user_id"
 																		 value:SHKCONFIG(netEaseWeiboUserID)];
 	NSArray *params = [NSArray arrayWithObjects:statusParam, nil];
 	[oRequest setParameters:params];

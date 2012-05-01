@@ -69,6 +69,30 @@
 - (NSString*)googleplusCallbackUrl{
    return @""; 
 }
+//Tencent Weibo
+- (NSString*)tencentWeiboConsumerKey{
+    return @"";
+}
+
+- (NSString*)tencentWeiboConsumerSecret{
+    return @"";
+}
+
+- (NSString*)tencentWeiboCallbackUrl{
+    return @"";
+}
+
+- (NSNumber*)tencentWeiboUseXAuth{
+    return [NSNumber numberWithInt:0];
+}
+
+- (NSString*)tencentWeiboScreenname{
+    return @"";
+}
+
+- (NSString*)tencentWeiboUserID{
+    return @"";
+}
 
 // Sina Weibo 
 - (NSString*)sinaWeiboConsumerKey {

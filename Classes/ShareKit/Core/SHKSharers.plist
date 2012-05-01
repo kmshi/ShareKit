@@ -16,6 +16,7 @@
 	<array>
 		<string>SHKDouban</string>
 		<string>SHKGooglePlus</string>
+		<string>SHKTencentWeibo</string>
 		<string>SHKSinaWeibo</string>
 		<string>SHKNetEaseWeibo</string>
 		<string>SHKReadability</string>

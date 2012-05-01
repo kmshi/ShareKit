@@ -53,6 +53,12 @@
 - (NSString*)googleplusConsumerKey;
 - (NSString*)googleplusConsumerSecret;
 - (NSString*)googleplusCallbackUrl;
+- (NSString*)tencentWeiboConsumerKey;
+- (NSString*)tencentWeiboConsumerSecret;
+- (NSString*)tencentWeiboCallbackUrl;
+- (NSNumber*)tencentWeiboUseXAuth;
+- (NSString*)tencentWeiboScreenname;
+- (NSString*)tencentWeiboUserID;
 - (NSString*)sinaWeiboConsumerKey;
 - (NSString*)sinaWeiboConsumerSecret;
 - (NSString*)sinaWeiboCallbackUrl;

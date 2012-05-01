@@ -27,11 +27,13 @@
 #import "OAMutableURLRequest.h"
 #import "DefaultSHKConfigurator.h"
 
+#define NONCE_LENGTH_FOR_TENCENT 32
 
 @interface OAMutableURLRequest (Private)
 - (void)_generateTimestamp;
 - (void)_generateNonce;
 - (NSString *)_signatureBaseString;
+- (NSString *)normalizeRequestParameters;
 @end
 
 @implementation OAMutableURLRequest
@@ -184,7 +186,15 @@ signatureProvider:(id<OASignatureProviding, NSObject>)aProvider
                              nonce,
 							 extraParameters];
     
-    [self setValue:oauthHeader forHTTPHeaderField:@"Authorization"];
+    if ([self->realm isEqualToString:@"https://open.t.qq.com"]) {
+        NSString * encodedSignature = [signature URLEncodedString];
+        
+		NSMutableString * finalRequest = [NSMutableString string];
+		[finalRequest appendFormat:@"%@?%@&oauth_signature=%@", [[self URL] URLStringWithoutQuery], [self normalizeRequestParameters], encodedSignature];
+        [self setURL:[NSURL URLWithString:finalRequest]];
+    }else {
+        [self setValue:oauthHeader forHTTPHeaderField:@"Authorization"];
+    }
 }
 
 #pragma mark -
@@ -203,11 +213,32 @@ signatureProvider:(id<OASignatureProviding, NSObject>)aProvider
     if (nonce) {
         CFRelease(nonce);
     }
-    nonce = (NSString *)string;
+    NSString * random = (NSString *)string;
+    
+	if ([self->realm isEqualToString:@"https://open.t.qq.com"]) {
+		nonce = [[random substringToIndex:NONCE_LENGTH_FOR_TENCENT] copy];
+	}else {
+		nonce = [random copy];
+	}
+	[random release];
 }
 
 - (NSString *)_signatureBaseString
 {
+    NSString *normalizedRequestParameters = [self normalizeRequestParameters];
+    
+    // OAuth Spec, Section 9.1.2 "Concatenate Request Elements"
+    NSString *ret = [NSString stringWithFormat:@"%@&%@&%@",
+					 [self HTTPMethod],
+					 [[[self URL] URLStringWithoutQuery] URLEncodedString],
+					 [normalizedRequestParameters URLEncodedString]];
+	
+	SHKLog(@"OAMutableURLRequest parameters %@", normalizedRequestParameters);
+	
+	return ret;
+}
+
+- (NSString *)normalizeRequestParameters {
     // OAuth Spec, Section 9.1.1 "Normalize Request Parameters"
     // build a sorted array of both request parameters and OAuth header parameters
     NSMutableArray *parameterPairs = [NSMutableArray arrayWithCapacity:(6)]; // 6 being the number of OAuth params in the Signature Base String
@@ -235,17 +266,7 @@ signatureProvider:(id<OASignatureProviding, NSObject>)aProvider
 	}
     
     NSArray *sortedPairs = [parameterPairs sortedArrayUsingSelector:@selector(compare:)];
-    NSString *normalizedRequestParameters = [sortedPairs componentsJoinedByString:@"&"];
-    
-    // OAuth Spec, Section 9.1.2 "Concatenate Request Elements"
-    NSString *ret = [NSString stringWithFormat:@"%@&%@&%@",
-					 [self HTTPMethod],
-					 [[[self URL] URLStringWithoutQuery] URLEncodedString],
-					 [normalizedRequestParameters URLEncodedString]];
-	
-	SHKLog(@"OAMutableURLRequest parameters %@", normalizedRequestParameters);
-	
-	return ret;
+    return [sortedPairs componentsJoinedByString:@"&"];
 }
 
 @end

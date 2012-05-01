@@ -363,8 +363,7 @@
 		}
 	}
 	
-	NSError *error = [NSError errorWithDomain:@"Douban" code:2 userInfo:[NSDictionary dictionaryWithObject:errorMessage forKey:NSLocalizedDescriptionKey]];
-	[self sendDidFailWithError:error];
+	[self sendDidFailWithError:[SHK error:errorMessage,nil]];
 }
 
 @end

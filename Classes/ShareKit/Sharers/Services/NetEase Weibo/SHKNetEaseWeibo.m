@@ -34,22 +34,35 @@
 
 #define API_DOMAIN  @"http://api.t.163.com"
 
-static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
+//static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 
 
 @interface SHKNetEaseWeibo ()
 
-- (BOOL)prepareItem;
+#pragma mark -
+#pragma mark UI Implementation
+
+- (void)showNetEaseWeiboForm;
+
+#pragma mark -
+#pragma mark Share API Methods
+
+- (void)sendStatus;
+- (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendStatusTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
+- (void)sendImage;
+- (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
 - (BOOL)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
-- (BOOL)validateItemAfterUserEdit;
+
 - (void)handleUnsuccessfulTicket:(NSData *)data;
 
 @end
 
 @implementation SHKNetEaseWeibo
-
-@synthesize xAuth;
 
 - (id)init
 {
@@ -59,10 +72,7 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 		self.consumerKey = SHKCONFIG(netEaseWeiboConsumerKey);		
 		self.secretKey = SHKCONFIG(netEaseWeiboConsumerSecret);
  		self.authorizeCallbackURL = [NSURL URLWithString:SHKCONFIG(netEaseWeiboCallbackUrl)];
-		
-		// xAuth
-		self.xAuth = [SHKCONFIG(netEaseWeiboUseXAuth) boolValue] ? YES : NO;
-		
+				
 		// You do not need to edit these, they are the same for everyone
 		self.authorizeURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/oauth/authenticate", API_DOMAIN]];
 		self.requestURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/oauth/request_token", API_DOMAIN]];
@@ -94,10 +104,10 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	return YES;
 }
 
-+ (BOOL)canGetUserInfo
-{
-	return YES;
-}
+//+ (BOOL)canGetUserInfo
+//{
+//	return YES;
+//}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -107,144 +117,28 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	return NO;
 }
 
-#pragma mark -
-#pragma mark Commit Share
-
-- (void)share 
-{
-	BOOL itemPrepared = [self prepareItem];
-	
-	//the only case item is not prepared is when we wait for URL to be shortened on background thread. In this case [super share] is called in callback method
-	if (itemPrepared) {
-		[super share];
-	}
-}
-
-#pragma mark -
-
-- (BOOL)prepareItem 
-{
-	BOOL result = YES;
-	
-	if (item.shareType == SHKShareTypeURL)
-	{
-		BOOL isURLAlreadyShortened = [self shortenURL];
-		result = isURLAlreadyShortened;
-		
-	}
-	
-	else if (item.shareType == SHKShareTypeImage)
-	{
-		[item setCustomValue:item.title forKey:@"status"];
-	}
-	
-	else if (item.shareType == SHKShareTypeText)
-{		
-		[item setCustomValue:item.text forKey:@"status"];
-	}
-	
-	return result;
-}
 
 #pragma mark -
 #pragma mark Authorization
 
-- (void)promptAuthorization
-{		
-	if (xAuth)
-		[super authorizationFormShow]; // xAuth process
-	
-	else
-		[super promptAuthorization]; // OAuth process		
-}
+//+ (void)logout {
+//	
+//	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKNetEaseWeiboUserInfo];
+//	[super logout];    
+//}
 
-+ (void)logout {
-	
-	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKNetEaseWeiboUserInfo];
-	[super logout];    
-}
-
-#pragma mark xAuth
-
-+ (NSString *)authorizationFormCaption
-{
-	return SHKLocalizedString(@"Create a free account at %@", @"t.163.com");
-}
-
-+ (NSArray *)authorizationFormFields
-{
-	if ([SHKCONFIG(netEaseWeiboUserID) isEqualToString:@""])
-		return [super authorizationFormFields];
-	
-    NSString *followMeString = [SHKCONFIG(netEaseaWeiboScreenname) isEqualToString:@""] ? 
-        SHKLocalizedString(@"Follow us") : SHKLocalizedString(@"Follow %@", SHKCONFIG(netEaseaWeiboScreenname));
-    
-    
-    return [NSArray arrayWithObjects:
-			[SHKFormFieldSettings label:SHKLocalizedString(@"Username") key:@"username" type:SHKFormFieldTypeText start:nil],
-			[SHKFormFieldSettings label:SHKLocalizedString(@"Password") key:@"password" type:SHKFormFieldTypePassword start:nil],
-			[SHKFormFieldSettings label:followMeString key:@"followMe" type:SHKFormFieldTypeSwitch start:SHKFormFieldSwitchOn],			
-			nil];
-}
-
-- (void)authorizationFormValidate:(SHKFormController *)form
-{
-	self.pendingForm = form;
-	[self tokenAccess];
-}
 
 - (void)tokenAccessModifyRequest:(OAMutableURLRequest *)oRequest
-{	
-	if (xAuth)
-	{
-		NSDictionary *formValues = [pendingForm formValues];
-		
-		OARequestParameter *username = [[[OARequestParameter alloc] initWithName:@"x_auth_username"
-                                                                           value:[formValues objectForKey:@"username"]] autorelease];
-		
-		OARequestParameter *password = [[[OARequestParameter alloc] initWithName:@"x_auth_password"
-                                                                           value:[formValues objectForKey:@"password"]] autorelease];
-		
-		OARequestParameter *mode = [[[OARequestParameter alloc] initWithName:@"x_auth_mode"
-                                                                       value:@"client_auth"] autorelease];
-		
-		[oRequest setParameters:[NSArray arrayWithObjects:username, password, mode, nil]];
-	}
-    else
-    {
-        if (pendingAction == SHKPendingRefreshToken)
-        {
-            if (accessToken.sessionHandle != nil)
-                [oRequest setOAuthParameterName:@"oauth_session_handle" withValue:accessToken.sessionHandle];	
-        }
-        
-        else if ([authorizeResponseQueryVars objectForKey:@"oauth_verifier"])
-            [oRequest setOAuthParameterName:@"oauth_verifier" withValue:[authorizeResponseQueryVars objectForKey:@"oauth_verifier"]];
-    }
-}
-
-- (void)tokenAccessTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data 
 {
-	if (xAuth) 
-	{
-		if (ticket.didSucceed)
-		{
-			[item setCustomValue:[[pendingForm formValues] objectForKey:@"followMe"] forKey:@"followMe"];
-			[pendingForm close];
-		}
-		
-		else
-		{
-			NSString *response = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
-			
-			SHKLog(@"tokenAccessTicket Response Body: %@", response);
-			
-			[self tokenAccessTicket:ticket didFailWithError:[SHK error:response]];
-			return;
-		}
-	}
+    if (pendingAction == SHKPendingRefreshToken)
+    {
+        if (accessToken.sessionHandle != nil)
+            [oRequest setOAuthParameterName:@"oauth_session_handle" withValue:accessToken.sessionHandle];	
+    }
     
-	[super tokenAccessTicket:ticket didFinishWithData:data];		
+    else if ([authorizeResponseQueryVars objectForKey:@"oauth_verifier"])
+        [oRequest setOAuthParameterName:@"oauth_verifier" withValue:[authorizeResponseQueryVars objectForKey:@"oauth_verifier"]];
+
 }
 
 
@@ -255,16 +149,18 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 {
     if (item.shareType == SHKShareTypeURL)
 	{
-		[self showNetEaseWeiboForm];
+		[self shortenURL];
 	}
 	
     else if (item.shareType == SHKShareTypeImage)
 	{
+        [item setCustomValue:item.title forKey:@"status"];
 		[self showNetEaseWeiboForm];
 	}
 	
 	else if (item.shareType == SHKShareTypeText)
 	{
+        [item setCustomValue:item.text forKey:@"status"];
 		[self showNetEaseWeiboForm];
 	}
     
@@ -302,13 +198,10 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 
 - (BOOL)shortenURL
 {
-    if ([SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
-        NSAssert(NO, @"ShareKit: Could not shorting url with empty sina weibo consumer key.");
-
-	if (![SHK connected])
+	if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
 		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
-		return YES;
+		return NO;
 	}
     
 	if (!quiet)
@@ -324,32 +217,30 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 											 method:@"GET"
 										  autostart:YES] autorelease];
     
-    return NO;
+    return YES;
 }
 
 - (void)shortenURLFinished:(SHKRequest *)aRequest
 {
 	[[SHKActivityIndicator currentIndicator] hide];
     
-    @try 
-    {
-        NSArray *result = [[aRequest getResult] objectFromJSONString];
-        item.URL = [NSURL URLWithString:[[result objectAtIndex:0] objectForKey:@"url_short"]];
-    }
-    @catch (NSException *exception) 
-	{
-		// TODO - better error message
-		[[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Shorten URL Error")
-									 message:SHKLocalizedString(@"We could not shorten the URL.")
-									delegate:nil
-						   cancelButtonTitle:SHKLocalizedString(@"Continue")
-						   otherButtonTitles:nil] autorelease] show];
-    }
+    NSArray *result = [[aRequest getResult] objectFromJSONString];
     
-    [item setCustomValue:[NSString stringWithFormat:@"%@: %@", item.title, item.URL.absoluteString] 
+    if ([result isKindOfClass:[NSArray class]] && result.count>0) {
+        item.URL = [NSURL URLWithString:[[result objectAtIndex:0] objectForKey:@"url_short"]];
+    }else {
+        // TODO - better error message
+        [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Shorten URL Error")
+                                     message:SHKLocalizedString(@"We could not shorten the URL.")
+                                    delegate:nil
+                           cancelButtonTitle:SHKLocalizedString(@"Continue")
+                           otherButtonTitles:nil] autorelease] show];
+    }
+
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, item.URL.absoluteString] 
                   forKey:@"status"];
 		
-	[super share];
+	[self showNetEaseWeiboForm];
 	}
 	
 
@@ -363,30 +254,13 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	}
 	
 	NSString *status = [item customValueForKey:@"status"];
-	return status != nil;
+	return status != nil && status.length <= 140;
 }
 
-- (BOOL)validateItemAfterUserEdit 
-{
-	BOOL result = NO;
-
-	BOOL isValid = [self validateItem];    
-	NSString *status = [item customValueForKey:@"status"];
-	
-	if (isValid && status.length <= 140) {
-		result = YES;
-	}
-	
-	return result;
-}
 
 - (BOOL)send
-{	
-	// Check if we should send follow request too
-	if (xAuth && [item customBoolForSwitchKey:@"followMe"])
-		[self followMe];	
-	
-	if (![self validateItemAfterUserEdit])
+{		
+	if (![self validateItem])
 		return NO;
 	
 	switch (item.shareType) {
@@ -395,9 +269,9 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 			[self sendImage];
 			break;
 			
-		case SHKShareTypeUserInfo:            
+//		case SHKShareTypeUserInfo:            
 //			[self sendUserInfo];
-			break;
+//			break;
 			
 		default:
 			[self sendStatus];
@@ -437,8 +311,6 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 
 - (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data 
 {	
-	// TODO better error handling here
-    
 	if (ticket.didSucceed) 
 		[self sendDidFinish];
 	
@@ -468,7 +340,6 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 																	   realm:API_DOMAIN
 														   signatureProvider:signatureProvider];
     [oRequest setHTTPMethod:@"POST"];
-    [oRequest prepare];
     
 	CGFloat compression = 0.9f;
 	NSData *imageData = UIImageJPEGRepresentation([item image], compression);
@@ -516,10 +387,7 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	
 	// setting the body of the post to the reqeust
 	[oRequest setHTTPBody:body];
-    
-	// Notify delegate
-	[self sendDidStart];
-    
+        
 	// Start the request
 	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
 																						  delegate:self
@@ -533,9 +401,7 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 }
 
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
-	// TODO better error handling here
-    SHKLog(@"%@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
-	
+
 	if (ticket.didSucceed) {
 		[self sendDidFinish];
         
@@ -557,7 +423,7 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
         
         [self sendStatus];
 	} else {
-		[self sendDidFailWithError:[SHK error:SHKLocalizedString(@"There was a problem saving to NetEase Weibo.")]];
+		[self handleUnsuccessfulTicket:data];
 	}
 }
 
@@ -565,12 +431,54 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	[self sendDidFailWithError:error];
 }
 
+- (void)handleUnsuccessfulTicket:(NSData *)data
+{
+	if (SHKDebugShowLogs)
+		SHKLog(@"NetEase Send Status Error: %@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+	
+	// CREDIT: Oliver Drobnik
+	
+	NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];		
+	
+	// in case our makeshift parsing does not yield an error message
+	NSString *errorMessage = @"Unknown Error";		
+	
+	NSScanner *scanner = [NSScanner scannerWithString:string];
+	
+	// skip until error message
+	[scanner scanUpToString:@"\"error\":\"" intoString:nil];
+	
+	
+	if ([scanner scanString:@"\"error\":\"" intoString:nil])
+	{
+		// get the message until the closing double quotes
+		[scanner scanUpToCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"\""] intoString:&errorMessage];
+	}
+	
+	
+	// this is the error message for revoked access ...?... || removed app from Twitter
+    // TODO:Is it same with NetEase? {"request":"/statuses/update.json","error":"oauth_problem=token_invalid HTTP status=401","error_code":"401","message_code":"00401token_invalid"}
+	if ([errorMessage isEqualToString:@"Invalid / used nonce"] || [errorMessage isEqualToString:@"Could not authenticate with OAuth."]|| [errorMessage isEqualToString:@"oauth_problem=token_invalid HTTP status=401"]) {
+		[[self class] logout];
+		[self shouldReloginWithPendingAction:SHKPendingSend];
+        return;
+		
+	} else {
+		
+		//when sharing image, and the user removed app permissions there is no JSON response expected above, but XML, which we need to parse. 401 is obsolete credentials -> need to relogin
+		if ([string rangeOfString:@"401"].location != NSNotFound) {
+			[[self class] logout];
+			[self shouldReloginWithPendingAction:SHKPendingSend];
+			return;
+		}
+	}
+	
+	[self sendDidFailWithError:[SHK error:errorMessage,nil]];
+}
+
 
 - (void)followMe
 {
-	// remove it so in case of other failures this doesn't get hit again
-	[item setCustomValue:nil forKey:@"followMe"];
-    
 	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/friendships/create.json", API_DOMAIN]]
 																	consumer:consumer
 																	   token:accessToken
@@ -579,31 +487,18 @@ static NSString *const kSHKNetEaseWeiboUserInfo = @"kSHKNetEaseWeiboUserInfo";
 	
 	[oRequest setHTTPMethod:@"POST"];
     OARequestParameter *statusParam = [[OARequestParameter alloc] initWithName:@"id"
-																		 value:kSHKNetEaseWeiboUserInfo];
+																		 value:SHKCONFIG(netEaseWeiboUserID)];
 	NSArray *params = [NSArray arrayWithObjects:statusParam, nil];
 	[oRequest setParameters:params];
 	[statusParam release];
     
 	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
                                                                                           delegate:self // Currently not doing any error handling here.  If it fails, it's probably best not to bug the user to follow you again.
-                                                                                 didFinishSelector:@selector(followMeTicket:didFinishWithData:)
-                                                                                   didFailSelector:@selector(followMeTicket:didFailWithError:)];	
+                                                                                 didFinishSelector:nil
+                                                                                   didFailSelector:nil];	
 	
 	[fetcher start];
 	[oRequest release];
-}
-
-
-- (void)followMeTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
-    SHKLog(@"followMeTicket response: %@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
-	
-	if ( ! ticket.didSucceed) {
-		[self sendDidFailWithError:[SHK error:SHKLocalizedString(@"There was an error while follow NetEase Weibo account, May be user is not exist.")]];
-	}
-}
-
-- (void)followMeTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error {
-	[self sendDidFailWithError:error];
 }
 
 @end

@@ -32,31 +32,5 @@
 
 
 @interface SHKNetEaseWeibo : SHKOAuthSharer <SHKFormControllerLargeTextFieldDelegate>
-{	
-	BOOL xAuth;		
-}
-
-@property BOOL xAuth;
- 
-    
-#pragma mark -
-#pragma mark UI Implementation
-    
-- (void)showNetEaseWeiboForm;
-    
-#pragma mark -
-#pragma mark Share API Methods
-      
-- (void)sendStatus;
-- (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-- (void)sendStatusTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
-
-- (void)sendImage;
-- (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-- (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
-    
 - (void)followMe;
-- (void)followMeTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-- (void)followMeTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
-
 @end

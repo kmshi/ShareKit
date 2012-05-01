@@ -158,18 +158,15 @@
 		[self shortenURL];
 	}
 	
-	else if (item.shareType == SHKShareTypeURL)
-	{
-		[self showSinaWeiboForm];
-	}
-	
     else if (item.shareType == SHKShareTypeImage)
 	{
+        [item setCustomValue:item.title forKey:@"status"];
 		[self showSinaWeiboForm];
 	}
 	
 	else if (item.shareType == SHKShareTypeText)
 	{
+        [item setCustomValue:item.text forKey:@"status"];
 		[self showSinaWeiboForm];
 	}
     
@@ -424,11 +421,14 @@
 			NSString *urlString = [dataString substringWithRange:NSMakeRange(startingRange.location + startingRange.length, endingRange.location - (startingRange.location + startingRange.length))];
 			//NSLog(@"extracted string: %@",urlString);
 			[item setCustomValue:[NSString stringWithFormat:@"%@ %@",[item customValueForKey:@"status"],urlString] forKey:@"status"];
-			[self sendStatus];
 		}else {
-            [self sendDidFinish];
+            [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Upload image Error")
+                                         message:SHKLocalizedString(@"We could not upload the image.")
+                                        delegate:nil
+                               cancelButtonTitle:SHKLocalizedString(@"Continue")
+                               otherButtonTitles:nil] autorelease] show];
         }
-		
+        [self sendStatus];
 		
 	} else {
 		[self handleUnsuccessfulTicket:data];
@@ -481,8 +481,7 @@
 		}
 	}
 	
-	NSError *error = [NSError errorWithDomain:@"Sina" code:2 userInfo:[NSDictionary dictionaryWithObject:errorMessage forKey:NSLocalizedDescriptionKey]];
-	[self sendDidFailWithError:error];
+	[self sendDidFailWithError:[SHK error:errorMessage,nil]];
 }
 
 - (void)followMe

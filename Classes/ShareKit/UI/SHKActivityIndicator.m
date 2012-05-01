@@ -175,8 +175,9 @@ static SHKActivityIndicator *_currentIndicator = nil;
     //iOS5 use Unicode 6.0 characters,and iOS4.x use Softbank PUA characters, 
     //there was a mapping:http://opensource.apple.com/source/ICU/ICU-461.13/icuSources/data/translit/Any_SoftbankSMS.txt
     //\U0001F4B0 ↔ \uE12F ;\U0001F381 ↔ \uE112 ;
-    
-    if ([[UIDevice currentDevice].systemVersion versionStringCompare:@"5.0"]==NSOrderedAscending) {
+    int sysVer = 5;
+    [[NSScanner scannerWithString:[UIDevice currentDevice].systemVersion] scanInteger:&sysVer];
+    if (sysVer<5) {
         [self setCenterMessage:@"\uE112"];
     }else {
         [self setCenterMessage:@"\U0001F381"];

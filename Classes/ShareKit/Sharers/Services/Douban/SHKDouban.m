@@ -33,13 +33,29 @@
 #import "SHKXMLResponseParser.h"
 #import "NSMutableDictionary+NSNullsToEmptyStrings.h"
 
-static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
+//static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 @interface SHKDouban ()
 
+#pragma mark -
+#pragma mark UI Implementation
+
+- (void)showDoubanForm;
+
+#pragma mark -
+#pragma mark Share API Methods
+
+- (void)sendStatus;
+- (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendStatusTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
+// TODO: Finish it below
+//- (void)sendUserInfo;
+//- (void)sendUserInfo:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+//- (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
 - (BOOL)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
-- (BOOL)validateItemAfterUserEdit;
 - (void)handleUnsuccessfulTicket:(NSData *)data;
 
 @end
@@ -84,10 +100,10 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 	return YES;
 }
 
-+ (BOOL)canGetUserInfo
-{
-	return YES;
-}
+//+ (BOOL)canGetUserInfo
+//{
+//	return YES;
+//}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -100,11 +116,11 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 #pragma mark -
 #pragma mark Authorization
 
-+ (void)logout 
-{
-	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKDoubanUserInfo];
-	[super logout];    
-}
+//+ (void)logout 
+//{
+//	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKDoubanUserInfo];
+//	[super logout];    
+//}
 
 #pragma mark -
 #pragma mark UI Implementation
@@ -162,12 +178,9 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 - (BOOL)shortenURL
 {
-    if ([SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
-        NSAssert(NO, @"ShareKit: Could not shorting url with empty sina weibo consumer key.");
-    
-	if (![SHK connected])
+	if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
-		[item setCustomValue:[NSString stringWithFormat:@"%@: %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
+		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
 		[self showDoubanForm];		
 		return NO;
 	}
@@ -191,23 +204,20 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 - (void)shortenURLFinished:(SHKRequest *)aRequest
 {
 	[[SHKActivityIndicator currentIndicator] hide];
-    
-    @try 
-    {
-        NSArray *result = [[aRequest getResult] objectFromJSONString];
+
+    NSArray *result = [[aRequest getResult] objectFromJSONString];
+    if ([result isKindOfClass:[NSArray class]] && result.count>0) {
         item.URL = [NSURL URLWithString:[[result objectAtIndex:0] objectForKey:@"url_short"]];
-    }
-    @catch (NSException *exception) 
-    {
+    }else {
         // TODO - better error message
-		[[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Shorten URL Error")
-									 message:SHKLocalizedString(@"We could not shorten the URL.")
-									delegate:nil
-						   cancelButtonTitle:SHKLocalizedString(@"Continue")
-						   otherButtonTitles:nil] autorelease] show];
+        [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Shorten URL Error")
+                                     message:SHKLocalizedString(@"We could not shorten the URL.")
+                                    delegate:nil
+                           cancelButtonTitle:SHKLocalizedString(@"Continue")
+                           otherButtonTitles:nil] autorelease] show];
     }
     
-    [item setCustomValue:[NSString stringWithFormat:@"%@: %@", item.title, item.URL.absoluteString] 
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, item.URL.absoluteString] 
                   forKey:@"status"];
     
 	[self showDoubanForm];
@@ -224,26 +234,13 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 	}
 	
 	NSString *status = [item customValueForKey:@"status"];
-	return status != nil;
+	return status != nil && status.length <= 140;
 }
 
-- (BOOL)validateItemAfterUserEdit 
-{
-	BOOL result = NO;
-	
-	BOOL isValid = [self validateItem];    
-	NSString *status = [item customValueForKey:@"status"];
-	
-	if (isValid && status.length <= 140) {
-		result = YES;
-	}
-	
-	return result;
-}
 
 - (BOOL)send
 {	
-	if ( ! [self validateItemAfterUserEdit])
+	if ( ! [self validateItem])
 		return NO;
 	
     switch (item.shareType) 
@@ -292,9 +289,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 - (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data 
 {	
-	// TODO better error handling here
-	
-	if (ticket.didSucceed) 
+    if (ticket.didSucceed) 
 		[self sendDidFinish];
 	
 	else
@@ -314,7 +309,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
     NSString *urlString = [NSString stringWithFormat:@"%@?oauth_token=%@&p=1", authorizeURL.absoluteString, requestToken.key];
     
     if ( ! [[authorizeCallbackURL absoluteString] isEqualToString:@""]) {
-        urlString = [NSString stringWithFormat:@"%@&oauth_callback=%@&p=1", 
+        urlString = [NSString stringWithFormat:@"%@&oauth_callback=%@", 
                      urlString, 
                      [authorizeCallbackURL absoluteString]];
     }
@@ -329,7 +324,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 - (void)handleUnsuccessfulTicket:(NSData *)data
 {
 	if (SHKDebugShowLogs)
-		SHKLog(@"Sina Weibo Send Status Error: %@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+		SHKLog(@"Douban Send Status Error: %@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
 	
 	// CREDIT: Oliver Drobnik
 	
@@ -352,21 +347,23 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 	
 	
 	// this is the error message for revoked access ...?... || removed app from Twitter
+    // TODO:Is it same with Douban?
 	if ([errorMessage isEqualToString:@"Invalid / used nonce"] || [errorMessage isEqualToString:@"Could not authenticate with OAuth."]) {
 		
 		[self shouldReloginWithPendingAction:SHKPendingSend];
+        return;
 		
 	} else {
 		
 		//when sharing image, and the user removed app permissions there is no JSON response expected above, but XML, which we need to parse. 401 is obsolete credentials -> need to relogin
-		if ([[SHKXMLResponseParser getValueForElement:@"code" fromResponse:data] isEqualToString:@"401"]) {
+		if ([string rangeOfString:@"Signature does not match"].location != NSNotFound) {
 			
 			[self shouldReloginWithPendingAction:SHKPendingSend];
 			return;
 		}
 	}
 	
-	NSError *error = [NSError errorWithDomain:@"SinaWeibo" code:2 userInfo:[NSDictionary dictionaryWithObject:errorMessage forKey:NSLocalizedDescriptionKey]];
+	NSError *error = [NSError errorWithDomain:@"Douban" code:2 userInfo:[NSDictionary dictionaryWithObject:errorMessage forKey:NSLocalizedDescriptionKey]];
 	[self sendDidFailWithError:error];
 }
 

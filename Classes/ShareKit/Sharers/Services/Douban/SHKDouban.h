@@ -32,21 +32,4 @@
 
 @interface SHKDouban : SHKOAuthSharer <SHKFormControllerLargeTextFieldDelegate>
 
-#pragma mark -
-#pragma mark UI Implementation
-
-- (void)showDoubanForm;
-
-#pragma mark -
-#pragma mark Share API Methods
-
-- (void)sendStatus;
-- (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-- (void)sendStatusTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
-
-// TODO: Finish it below
-- (void)sendUserInfo;
-- (void)sendUserInfo:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-- (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
-
 @end

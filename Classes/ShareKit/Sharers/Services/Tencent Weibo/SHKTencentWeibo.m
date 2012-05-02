@@ -2,6 +2,8 @@
 //  SHKTencentWeibo.m
 //  ShareKit
 //
+//  As Tencent OAuth is sluggish, you have to pass API_DOMAIN as realm to the OAMutalRequest
+//  --It does not use OAuth header but url query, and nonce has 30 length limit.
 //  Created by kshi on 12-5-1.
 //  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
 //
@@ -495,8 +497,7 @@
 		NSDictionary* result = [dataString objectFromJSONString];
 		
 		if ([[result valueForKey:@"ret"] intValue]==0) {
-			NSString *urlString = [result valueForKey:@"imgurl"];
-			SHKLog(@"imgurl: %@",urlString);
+			SHKLog(@"imgurl: %@",[result valueForKey:@"imgurl"]);
             [self sendDidFinish];
 		}else {
             [self handleUnsuccessfulTicket:data];
@@ -546,25 +547,30 @@
 }
 
 - (void)followMe
-{
-	// remove it so in case of other failures this doesn't get hit again
-//	[item setCustomValue:nil forKey:@"followMe"];
-//    
-//	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/friendships/create/%@.json", API_DOMAIN, SHKCONFIG(sinaWeiboUserID)]]
-//																	consumer:consumer
-//																	   token:accessToken
-//																	   realm:nil
-//														   signatureProvider:nil];
-//	
-//	[oRequest setHTTPMethod:@"POST"];
-//    
-//	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
-//                                                                                          delegate:nil // Currently not doing any error handling here.  If it fails, it's probably best not to bug the user to follow you again.
-//                                                                                 didFinishSelector:nil
-//                                                                                   didFailSelector:nil];	
-//	
-//	[fetcher start];
-//	[oRequest release];
+{    
+	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"http://open.t.qq.com/api/friends/add"]
+																	consumer:consumer
+																	   token:accessToken
+																	   realm:API_DOMAIN
+														   signatureProvider:nil];
+	
+	[oRequest setHTTPMethod:@"POST"];
+    
+    OARequestParameter *formatParam =[[OARequestParameter alloc] initWithName:@"format" value:@"json"];
+	OARequestParameter *nameParam =[[OARequestParameter alloc] initWithName:@"name" value:SHKCONFIG(tencentWeiboUserID)];
+    
+	NSArray *params = [NSArray arrayWithObjects:formatParam,nameParam, nil];
+	[oRequest setParameters:params];
+	[formatParam release];
+    [nameParam release];
+    
+	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+                                                                                          delegate:nil // Currently not doing any error handling here.  If it fails, it's probably best not to bug the user to follow you again.
+                                                                                 didFinishSelector:nil
+                                                                                   didFailSelector:nil];	
+	
+	[fetcher start];
+	[oRequest release];
 }
 
 

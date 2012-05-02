@@ -33,7 +33,7 @@
 #import "SHKXMLResponseParser.h"
 #import "NSMutableDictionary+NSNullsToEmptyStrings.h"
 
-//static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
+static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 @interface SHKDouban ()
 
@@ -49,10 +49,9 @@
 - (void)sendStatusTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)sendStatusTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-// TODO: Finish it below
-//- (void)sendUserInfo;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+- (void)sendUserInfo;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
 - (BOOL)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
@@ -100,10 +99,10 @@
 	return YES;
 }
 
-//+ (BOOL)canGetUserInfo
-//{
-//	return YES;
-//}
++ (BOOL)canGetUserInfo
+{
+	return YES;
+}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -116,11 +115,11 @@
 #pragma mark -
 #pragma mark Authorization
 
-//+ (void)logout 
-//{
-//	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKDoubanUserInfo];
-//	[super logout];    
-//}
++ (void)logout 
+{
+	[[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKDoubanUserInfo];
+	[super logout];    
+}
 
 #pragma mark -
 #pragma mark UI Implementation
@@ -245,10 +244,10 @@
 	
     switch (item.shareType) 
     {
-//		case SHKShareTypeUserInfo:            
-//			[self sendUserInfo];
-//			break;
-//			
+		case SHKShareTypeUserInfo:            
+			[self sendUserInfo];
+			break;
+			
 		default:
 			[self sendStatus];
 			break;
@@ -303,6 +302,47 @@
 	[self sendDidFailWithError:error];
 }
 
+- (void)sendUserInfo{
+    NSString* user_id = [[NSUserDefaults standardUserDefaults] objectForKey:kSHKDoubanUserInfo];
+    SHKLog(@"current user:%@",user_id);
+    if (![user_id isKindOfClass:[NSString class]]) { //when it is a NSDictionary
+        return;
+    }
+    
+    OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://api.douban.com/people/%@",user_id]]
+																	consumer:consumer
+																	   token:accessToken
+																	   realm:nil
+														   signatureProvider:nil];
+	
+	[oRequest setHTTPMethod:@"GET"];
+	
+	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+																						  delegate:self
+																				 didFinishSelector:@selector(sendUserInfoTicket:didFinishWithData:)
+																				   didFailSelector:@selector(sendUserInfoTicket:didFailWithError:)];	
+	
+	[fetcher start];
+	[oRequest release];
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
+    if (ticket.didSucceed) {
+        [[NSUserDefaults standardUserDefaults] setObject:[SHKXMLResponseParser objectFromXMLResponse:data] forKey:kSHKDoubanUserInfo]; 
+        SHKLog(@"%@",[SHKXMLResponseParser objectFromXMLResponse:data]);
+		[self sendDidFinish];
+	}
+	else
+	{		
+		[self handleUnsuccessfulTicket:data];
+	}
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error{
+    [self sendDidFailWithError:error];
+}
+
+
 #pragma mark - Overrewrite parent method
 - (void)tokenAuthorize
 {	
@@ -317,6 +357,22 @@
 	SHKOAuthView *auth = [[SHKOAuthView alloc] initWithURL:[NSURL URLWithString:urlString] delegate:self];
 	[[SHK currentHelper] showViewController:auth];	
 	[auth release];
+}
+
+- (void)tokenAccessTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
+    NSString *responseBody = [[NSString alloc] initWithData:data
+                                                   encoding:NSUTF8StringEncoding];
+    NSArray* array = [responseBody componentsSeparatedByString:@"&"];
+    for (NSString* str in array) {
+        NSRange range = [str rangeOfString:@"douban_user_id="];
+        if (range.location != NSNotFound) {
+            [[NSUserDefaults standardUserDefaults] setObject:[str substringFromIndex:(range.location+range.length)] forKey:kSHKDoubanUserInfo];
+            break;
+        }
+    }
+    SHKLog(@"douban_user_id:%@",[[NSUserDefaults standardUserDefaults] objectForKey:kSHKDoubanUserInfo]);
+
+    [super tokenAccessTicket:ticket didFinishWithData:data];
 }
 
 #pragma mark -
@@ -349,7 +405,7 @@
 	// this is the error message for revoked access ...?... || removed app from Twitter
     // TODO:Is it same with Douban?
 	if ([errorMessage isEqualToString:@"Invalid / used nonce"] || [errorMessage isEqualToString:@"Could not authenticate with OAuth."]) {
-		
+		[[self class] logout];
 		[self shouldReloginWithPendingAction:SHKPendingSend];
         return;
 		
@@ -357,7 +413,7 @@
 		
 		//when sharing image, and the user removed app permissions there is no JSON response expected above, but XML, which we need to parse. 401 is obsolete credentials -> need to relogin
 		if ([string rangeOfString:@"Signature does not match"].location != NSNotFound) {
-			
+			[[self class] logout];
 			[self shouldReloginWithPendingAction:SHKPendingSend];
 			return;
 		}

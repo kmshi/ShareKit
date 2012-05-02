@@ -11,5 +11,5 @@
 @interface SHKXMLResponseParser : NSObject <NSXMLParserDelegate>
 
 + (NSString *)getValueForElement:(NSString *)element fromResponse:(NSData *)data;
-
++ (NSDictionary*)objectFromXMLResponse:(NSData *)data;
 @end

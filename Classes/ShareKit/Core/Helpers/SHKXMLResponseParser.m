@@ -60,6 +60,21 @@
     return result;    
 }
 
++ (NSDictionary*)objectFromXMLResponse:(NSData *)data{
+    SHKXMLResponseParser *shkParser = [[SHKXMLResponseParser alloc] initWithData:data];
+    [shkParser parse];
+    
+    NSDictionary* result;
+    if (shkParser.xmlParsedSuccessfully) {
+        result = shkParser.parsedResponse;
+    } else {
+        result = nil;
+    }
+    [shkParser release];
+    
+    return result;    
+}
+
 - (NSString *)findRecursivelyValueForKey:(NSString *)searchedKey inDict:(NSDictionary *)dictionary {
     
     __block NSString *result = nil;

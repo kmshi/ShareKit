@@ -37,7 +37,8 @@
 #import "UIWebView+SHK.h"
 
 extern NSString * const SHKHideCurrentViewFinishedNotification;
-extern NSString *const CoinsUpdatedNotification;
+extern NSString * const CoinsUpdatedNotification;
+extern NSString * const SHKGetUserInfoNotification;
 
 @class SHKActionSheet;
 @class SHKViewControllerWrapper;

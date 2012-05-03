@@ -41,6 +41,7 @@
 NSString * SHKLocalizedStringFormat(NSString* key);
 NSString * const SHKHideCurrentViewFinishedNotification = @"SHKHideCurrentViewFinished";
 NSString * const CoinsUpdatedNotification = @"CoinsUpdatedNotification";
+NSString * const SHKGetUserInfoNotification = @"SHKGetUserInfoNotification";
 
 @interface SHK ()
 

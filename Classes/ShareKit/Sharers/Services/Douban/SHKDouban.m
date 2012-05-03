@@ -53,7 +53,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 - (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-- (BOOL)shortenURL;
+- (void)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
 - (void)handleUnsuccessfulTicket:(NSData *)data;
 
@@ -175,13 +175,13 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 #pragma mark -
 
-- (BOOL)shortenURL
+- (void)shortenURL
 {
 	if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
 		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
 		[self showDoubanForm];		
-		return NO;
+		return;
 	}
     
 	if (!quiet)
@@ -197,7 +197,6 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 											 method:@"GET"
 										  autostart:YES] autorelease];
     
-    return YES;
 }
 
 - (void)shortenURLFinished:(SHKRequest *)aRequest
@@ -304,10 +303,6 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 - (void)sendUserInfo{
     NSString* user_id = [[NSUserDefaults standardUserDefaults] objectForKey:kSHKDoubanUserInfo];
-    SHKLog(@"current user:%@",user_id);
-    if (![user_id isKindOfClass:[NSString class]]) { //when it is a NSDictionary
-        return;
-    }
     
     OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://api.douban.com/people/%@",user_id]]
 																	consumer:consumer
@@ -328,8 +323,13 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 - (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
     if (ticket.didSucceed) {
-        [[NSUserDefaults standardUserDefaults] setObject:[SHKXMLResponseParser objectFromXMLResponse:data] forKey:kSHKDoubanUserInfo]; 
-        SHKLog(@"%@",[SHKXMLResponseParser objectFromXMLResponse:data]);
+        NSDictionary* account = [SHKXMLResponseParser objectFromXMLResponse:data];
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+        [dict setValue:[account valueForKey:@"db:uid"] forKey:@"uid"];
+        [dict setValue:[account valueForKey:@"title"] forKey:@"name"];
+        //[dict setValue:[account valueForKey:@"uri"] forKey:@"email"];
+        [dict setValue:[self sharerId] forKey:@"shareid"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
 		[self sendDidFinish];
 	}
 	else
@@ -373,6 +373,15 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
     SHKLog(@"douban_user_id:%@",[[NSUserDefaults standardUserDefaults] objectForKey:kSHKDoubanUserInfo]);
 
     [super tokenAccessTicket:ticket didFinishWithData:data];
+}
+
+- (void)authDidFinish:(BOOL)success{
+    [super authDidFinish:success];
+    if (success) {
+        SHKItem* myitem = [SHKItem text:@""];
+        myitem.shareType = SHKShareTypeUserInfo;
+        [[self class] shareItem:myitem];
+    }
 }
 
 #pragma mark -

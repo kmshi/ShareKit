@@ -53,16 +53,15 @@
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-// TODO: Finish it below
-//- (void)sendUserInfo;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+- (void)sendUserInfo;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-- (BOOL)shortenURL;
+- (void)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
 
 - (void)handleUnsuccessfulTicket:(NSData *)data;
-
+- (void)followMe;
 @end
 
 @implementation SHKSinaWeibo
@@ -111,10 +110,10 @@
 	return YES;
 }
 
-//+ (BOOL)canGetUserInfo
-//{
-//	return YES;
-//}
++ (BOOL)canGetUserInfo
+{
+	return YES;
+}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -153,27 +152,24 @@
 
 - (void)show
 {
-    if (item.shareType == SHKShareTypeURL)
+    if (item.shareType == SHKShareTypeURL || [item.URL absoluteString].length>25)
 	{
 		[self shortenURL];
 	}
-	
-    else if (item.shareType == SHKShareTypeImage)
+    else if (item.shareType == SHKShareTypeImage || item.image != nil)
 	{
-        [item setCustomValue:item.title forKey:@"status"];
+        [item setCustomValue:item.title?item.title:item.text forKey:@"status"];
 		[self showSinaWeiboForm];
 	}
-	
-	else if (item.shareType == SHKShareTypeText)
-	{
-        [item setCustomValue:item.text forKey:@"status"];
-		[self showSinaWeiboForm];
-	}
-    
     else if (item.shareType == SHKShareTypeUserInfo)
 	{
 		[self setQuiet:YES];
 		[self tryToSend];
+	}
+    else
+	{
+        [item setCustomValue:item.text forKey:@"status"];
+		[self showSinaWeiboForm];
 	}
 }
 
@@ -202,12 +198,13 @@
 
 #pragma mark -
 
-- (BOOL)shortenURL
+- (void)shortenURL
 {
     if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
 		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
-		return NO;
+        [self showSinaWeiboForm];
+		return;
 	}
     
 	if (!quiet)
@@ -223,7 +220,6 @@
 											 method:@"GET"
 										  autostart:YES] autorelease];
     
-    return YES;
 }
 
 - (void)shortenURLFinished:(SHKRequest *)aRequest
@@ -269,20 +265,14 @@
 	if (![self validateItem])
 		return NO;
 	
-	switch (item.shareType) {
-			
-		case SHKShareTypeImage:            
-			[self sendImage];
-			break;
-			
-//		case SHKShareTypeUserInfo:            
-//			[self sendUserInfo];
-//			break;
-			
-		default:
-			[self sendStatus];
-			break;
-	}
+	if (item.shareType == SHKShareTypeImage || item.image!=nil)            
+        [self sendImage];
+    
+    else if (item.shareType == SHKShareTypeUserInfo)           
+        [self sendUserInfo];
+    
+	else
+        [self sendStatus];
 	
 	// Notify delegate
 	[self sendDidStart];	
@@ -343,8 +333,8 @@
 	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
 																	consumer:consumer
 																	   token:accessToken
-																	   realm:API_DOMAIN
-														   signatureProvider:signatureProvider];
+																	   realm:nil
+														   signatureProvider:nil];
     [oRequest setHTTPMethod:@"POST"];
     
 	CGFloat compression = 0.9f;
@@ -410,26 +400,9 @@
 	
 	if (ticket.didSucceed) {
 		
-		// Finished uploading Image, now need to posh the message and url in sina weibo
-		NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
-		NSRange startingRange = [dataString rangeOfString:@"<url>" options:NSCaseInsensitiveSearch];
-		//NSLog(@"found start string at %d, len %d",startingRange.location,startingRange.length);
-		NSRange endingRange = [dataString rangeOfString:@"</url>" options:NSCaseInsensitiveSearch];
-		//NSLog(@"found end string at %d, len %d",endingRange.location,endingRange.length);
-		
-		if (startingRange.location != NSNotFound && endingRange.location != NSNotFound) {
-			NSString *urlString = [dataString substringWithRange:NSMakeRange(startingRange.location + startingRange.length, endingRange.location - (startingRange.location + startingRange.length))];
-			//NSLog(@"extracted string: %@",urlString);
-			[item setCustomValue:[NSString stringWithFormat:@"%@ %@",[item customValueForKey:@"status"],urlString] forKey:@"status"];
-		}else {
-            [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Upload image Error")
-                                         message:SHKLocalizedString(@"We could not upload the image.")
-                                        delegate:nil
-                               cancelButtonTitle:SHKLocalizedString(@"Continue")
-                               otherButtonTitles:nil] autorelease] show];
-        }
-        [self sendStatus];
-		
+        //NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        //SHKLog(dataString);
+        [self sendDidFinish];
 	} else {
 		[self handleUnsuccessfulTicket:data];
 	}
@@ -437,6 +410,62 @@
 
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error {
 	[self sendDidFailWithError:error];
+}
+
+- (void)sendUserInfo{
+
+    OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/account/verify_credentials.json",API_DOMAIN]]
+																	consumer:consumer
+																	   token:accessToken
+																	   realm:nil
+														   signatureProvider:nil];
+	
+	[oRequest setHTTPMethod:@"GET"];
+	
+	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+																						  delegate:self
+																				 didFinishSelector:@selector(sendUserInfoTicket:didFinishWithData:)
+																				   didFailSelector:@selector(sendUserInfoTicket:didFailWithError:)];	
+	
+	[fetcher start];
+	[oRequest release];
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
+    if (ticket.didSucceed) {
+        NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+		NSDictionary* account = [dataString objectFromJSONString];
+        
+        //[[NSUserDefaults standardUserDefaults] setValue:account forKey:kSHKSinaWeiboUserInfo];
+        
+        SHKLog(@"account: %@",account);
+        
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+        [dict setValue:[account valueForKey:@"id"] forKey:@"uid"];
+        [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
+        //[dict setValue:[account valueForKey:@"uri"] forKey:@"email"];
+        [dict setValue:[account valueForKey:@"verified"] forKey:@"isvip"];
+        [dict setValue:[self sharerId] forKey:@"shareid"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
+		[self sendDidFinish];
+	}
+	else
+	{		
+		[self handleUnsuccessfulTicket:data];
+	}
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error{
+    [self sendDidFailWithError:error];
+}
+
+- (void)authDidFinish:(BOOL)success{
+    [super authDidFinish:success];
+    if (success) {
+        SHKItem* myitem = [SHKItem text:@""];
+        myitem.shareType = SHKShareTypeUserInfo;
+        [[self class] shareItem:myitem];
+    }
 }
 
 - (void)handleUnsuccessfulTicket:(NSData *)data

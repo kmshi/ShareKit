@@ -727,7 +727,12 @@
 		[self.shareDelegate performSelector:@selector(sharerFinishedSending:) withObject:self];
 	}
     
-    [SHK addCoins:2];
+    if (item.shareType == SHKShareTypeUserInfo) {
+        return;
+    }
+    
+    [SHK addCoins:2 withReason:[NSMutableDictionary dictionaryWithObjectsAndKeys:item.URL.absoluteString,@"url",item.title,@"title",item.text,@"text",[self sharerId],@"sharerid",nil]];
+    
     if (!self.quiet) {
         [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayGift:) withObject:@"You got 2 coins!" afterDelay:2];
     }

@@ -49,6 +49,7 @@ NSString * const SHKGetUserInfoNotification = @"SHKGetUserInfoNotification";
 
 - (UIViewController *)getCurrentRootViewController;
 - (UIViewController *)getTopViewController:(UIViewController *)aRootViewController;
++ (void) setCoins:(NSInteger)num;
 
 @end
 
@@ -679,14 +680,14 @@ static NSDictionary *sharersDictionary = nil;
 
 + (void) setCoins:(NSInteger)num{
     NSNumber* pNum = [NSNumber numberWithInteger:num];
-    [SHK setAuthValue:[pNum stringValue] forKey:@"count" forSharer:@"coins"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:CoinsUpdatedNotification object:pNum];
-    
+    [SHK setAuthValue:[pNum stringValue] forKey:@"count" forSharer:@"coins"];    
 }
 
-+ (void) addCoins:(NSInteger)num{
++ (void) addCoins:(NSInteger)num withReason:(NSDictionary*)userInfo{
     NSInteger cur = [self getCoins];
     [self setCoins:(cur+num)];
+    [userInfo setValue:[NSNumber numberWithInt:num] forKey:@"coins_added"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:CoinsUpdatedNotification object:nil userInfo:userInfo];
 }
 
 

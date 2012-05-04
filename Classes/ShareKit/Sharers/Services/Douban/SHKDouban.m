@@ -126,14 +126,14 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 
 - (void)show
 {
-	if (item.shareType == SHKShareTypeURL)
+	if (item.shareType == SHKShareTypeURL || [item.URL absoluteString].length>25)
 	{
 		[self shortenURL];
 	}
 	
-	else if (item.shareType == SHKShareTypeImage)
+	else if (item.shareType == SHKShareTypeImage || item.image !=nil)
 	{
-		[item setCustomValue:item.title forKey:@"status"];
+		[item setCustomValue:item.title?item.title:item.text forKey:@"status"];
 		[self showDoubanForm];
 	}
 	
@@ -179,7 +179,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 {
 	if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
-		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
+		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
 		[self showDoubanForm];		
 		return;
 	}
@@ -215,7 +215,7 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
                            otherButtonTitles:nil] autorelease] show];
     }
     
-    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, item.URL.absoluteString] 
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, item.URL.absoluteString] 
                   forKey:@"status"];
     
 	[self showDoubanForm];

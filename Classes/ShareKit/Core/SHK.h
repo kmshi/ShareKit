@@ -128,8 +128,7 @@ extern NSString * const SHKGetUserInfoNotification;
 
 #pragma mark - Coins storage
 + (NSInteger) getCoins;
-+ (void) setCoins:(NSInteger)num;
-+ (void) addCoins:(NSInteger)num;
++ (void) addCoins:(NSInteger)num withReason:(NSDictionary*)userInfo;
 
 @end
 

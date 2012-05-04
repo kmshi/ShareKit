@@ -10,5 +10,5 @@
 #import "SHKFormControllerLargeTextField.h"
 
 @interface SHKTencentWeibo : SHKOAuthSharer <SHKFormControllerLargeTextFieldDelegate>
-- (void)followMe;
+
 @end

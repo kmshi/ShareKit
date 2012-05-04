@@ -35,16 +35,17 @@
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-// TODO: Finish it below
-//- (void)sendUserInfo;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
-//- (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+- (void)sendUserInfo;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-- (BOOL)shortenURL;
+- (void)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
 
 - (void)handleUnsuccessfulTicket:(NSData *)data;
 - (NSString *)getIPAddress;
+
+- (void)followMe;
 @end
 
 @implementation SHKTencentWeibo
@@ -92,10 +93,10 @@
 	return YES;
 }
 
-//+ (BOOL)canGetUserInfo
-//{
-//	return YES;
-//}
++ (BOOL)canGetUserInfo
+{
+	return YES;
+}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -182,27 +183,27 @@
 
 - (void)show
 {
-    if (item.shareType == SHKShareTypeURL)
+    if (item.shareType == SHKShareTypeURL || [item.URL absoluteString].length>25)
 	{
 		[self shortenURL];
 	}
 	
-    else if (item.shareType == SHKShareTypeImage)
+    else if (item.shareType == SHKShareTypeImage || item.image != nil)
 	{
-        [item setCustomValue:item.title forKey:@"status"];
+        [item setCustomValue:item.title?item.title:item.text forKey:@"status"];
 		[self showTencentWeiboForm];
 	}
 	
-	else if (item.shareType == SHKShareTypeText)
-	{
-        [item setCustomValue:item.text forKey:@"status"];
-		[self showTencentWeiboForm];
-	}
-    
     else if (item.shareType == SHKShareTypeUserInfo)
 	{
 		[self setQuiet:YES];
 		[self tryToSend];
+	}
+    
+    else
+	{
+        [item setCustomValue:item.text forKey:@"status"];
+		[self showTencentWeiboForm];
 	}
 }
 
@@ -231,13 +232,16 @@
 
 #pragma mark -
 
-- (BOOL)shortenURL
+- (void)shortenURL
 {
-    if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
-	{
-		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
-		return NO;
-	}
+    //shift!!! tencent adds dirty stuff to make goo.gl,bitly,t.cn short url not workable
+    
+//    if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
+//	{
+		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
+        [self showTencentWeiboForm];
+		return;
+//	}
     
 	if (!quiet)
 		[[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Shortening URL...")];
@@ -252,7 +256,6 @@
 											 method:@"GET"
 										  autostart:YES] autorelease];
     
-    return YES;
 }
 
 - (void)shortenURLFinished:(SHKRequest *)aRequest
@@ -272,7 +275,7 @@
                            otherButtonTitles:nil] autorelease] show];
     }
     
-    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, item.URL.absoluteString] 
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, item.URL.absoluteString] 
                   forKey:@"status"];
 	
 	[self showTencentWeiboForm];
@@ -298,20 +301,15 @@
 	if (![self validateItem])
 		return NO;
 	
-	switch (item.shareType) {
-			
-		case SHKShareTypeImage:            
-			[self sendImage];
-			break;
-			
-            //		case SHKShareTypeUserInfo:            
-            //			[self sendUserInfo];
-            //			break;
-			
-		default:
-			[self sendStatus];
-			break;
-	}
+	if (item.shareType == SHKShareTypeImage || item.image!=nil)            
+        [self sendImage];
+    
+    else if (item.shareType == SHKShareTypeUserInfo)           
+        [self sendUserInfo];
+    
+	else
+        [self sendStatus];
+
 	
 	// Notify delegate
 	[self sendDidStart];	
@@ -319,38 +317,34 @@
 	return YES;
 }
 
-//ref:https://github.com/taobao-idev/TBShareKit/blob/master/ShareKit/Sharers/Services/Tencent/SHKTencent.m
 - (NSString *)getIPAddress 
 {
     return @"8.8.8.8";//as the following code always return error in simulator
     
-	NSString *address = @"error";
-	struct ifaddrs *interfaces = NULL;
-	struct ifaddrs *temp_addr = NULL;
-	int success = 0;
-    
-	//retrieve the current interfaces - returns 0 on success
-	success = getifaddrs(&interfaces);
-	if (success == 0) {
-		//Loop through linked list of interfaces
-		temp_addr = interfaces;
-		while (temp_addr != NULL) {
-			if (temp_addr->ifa_addr->sa_family == AF_INET) {
-				//Check if interface is en0 which is the wifi connection on the iPhone
-				if ([[NSString stringWithUTF8String: temp_addr->ifa_name] isEqualToString:@"en0"]) {
-					//Get NSString from C String
-//					address =[NSString stringWithCString:inet_ntoa(((struct sockaddr_in *) temp_addr->ifa_addr)->sin_addr) encoding:NSUTF8StringEncoding];
-//                    break;
-                    address =[NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *) temp_addr->ifa_addr)->sin_addr)];
-				}
-			}
-			temp_addr = temp_addr->ifa_next;
-		}
-	}
-	//Free memory
-	freeifaddrs(interfaces);
-	SHKLog(@"current address: %@", address);
-	return address;
+//	NSString *address = @"error";
+//	struct ifaddrs *interfaces = NULL;
+//	struct ifaddrs *temp_addr = NULL;
+//	int success = 0;
+//    
+//	//retrieve the current interfaces - returns 0 on success
+//	success = getifaddrs(&interfaces);
+//	if (success == 0) {
+//		//Loop through linked list of interfaces
+//		temp_addr = interfaces;
+//		while (temp_addr != NULL) {
+//			if (temp_addr->ifa_addr->sa_family == AF_INET) {
+//				//Check if interface is en0 which is the wifi connection on the iPhone
+//				if ([[NSString stringWithUTF8String: temp_addr->ifa_name] isEqualToString:@"en0"]) {
+//                    address =[NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *) temp_addr->ifa_addr)->sin_addr)];
+//				}
+//			}
+//			temp_addr = temp_addr->ifa_next;
+//		}
+//	}
+//	//Free memory
+//	freeifaddrs(interfaces);
+//	SHKLog(@"current address: %@", address);
+//	return address;
 }
 
 - (void)sendStatus
@@ -510,6 +504,73 @@
 
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error {
 	[self sendDidFailWithError:error];
+}
+
+- (void)sendUserInfo{
+    
+    OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"http://open.t.qq.com/api/user/info"]
+																	consumer:consumer
+																	   token:accessToken
+																	   realm:API_DOMAIN
+														   signatureProvider:nil];
+	
+	[oRequest setHTTPMethod:@"GET"];
+    
+    OARequestParameter *formatParam =[[OARequestParameter alloc] initWithName:@"format" value:@"json"];
+    NSArray *params = [NSArray arrayWithObjects:formatParam, nil];
+    [formatParam release];
+    
+    [oRequest setParameters:params];
+	
+	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+																						  delegate:self
+																				 didFinishSelector:@selector(sendUserInfoTicket:didFinishWithData:)
+																				   didFailSelector:@selector(sendUserInfoTicket:didFailWithError:)];	
+	
+	[fetcher start];
+	[oRequest release];
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
+    if (ticket.didSucceed) {
+        NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+		NSDictionary* result = [dataString objectFromJSONString];
+		
+		if ([[result valueForKey:@"ret"] intValue]==0) {
+            NSDictionary* account = [result valueForKey:@"data"];
+            //[[NSUserDefaults standardUserDefaults] setValue:account forKey:kSHKTencentWeiboUserInfo];
+            
+			SHKLog(@"account: %@",account);
+            NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+            [dict setValue:[account valueForKey:@"openid"] forKey:@"uid"];
+            [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
+            [dict setValue:[account valueForKey:@"email"] forKey:@"email"];
+            [dict setValue:[account valueForKey:@"isvip"] forKey:@"isvip"];
+            [dict setValue:[self sharerId] forKey:@"shareid"];
+            [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
+            [self sendDidFinish];
+		}else {
+            [self handleUnsuccessfulTicket:data];
+        }
+	}
+	else
+	{		
+		[self handleUnsuccessfulTicket:data];
+	}
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error{
+    [self sendDidFailWithError:error];
+}
+
+
+- (void)authDidFinish:(BOOL)success{
+    [super authDidFinish:success];
+    if (success) {
+        SHKItem* myitem = [SHKItem text:@""];
+        myitem.shareType = SHKShareTypeUserInfo;
+        [[self class] shareItem:myitem];
+    }
 }
 
 - (void)handleUnsuccessfulTicket:(NSData *)data

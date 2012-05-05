@@ -731,7 +731,7 @@
         return;
     }
     
-    [SHK addCoins:2 withReason:[NSMutableDictionary dictionaryWithObjectsAndKeys:item.URL.absoluteString,@"url",item.title,@"title",item.text,@"text",[self sharerId],@"sharerid",@"share",@"task",nil]];
+    [SHK addCoins:2 withReason:[NSMutableDictionary dictionaryWithObjectsAndKeys:item.URL.absoluteString,@"url",[item customValueForKey:@"status"],@"status",[self sharerId],@"sharerid",@"share",@"task",nil]];
     
     if (!self.quiet) {
         [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayGift:) withObject:@"You got 2 coins!" afterDelay:2];

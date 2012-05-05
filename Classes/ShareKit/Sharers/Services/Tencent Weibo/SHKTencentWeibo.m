@@ -238,7 +238,7 @@
     
 //    if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 //	{
-		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
+		[item setCustomValue:[NSString stringWithFormat:@"%@ %@ ", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
         [self showTencentWeiboForm];
 		return;
 //	}
@@ -275,7 +275,7 @@
                            otherButtonTitles:nil] autorelease] show];
     }
     
-    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title?item.title:item.text, item.URL.absoluteString] 
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@ ", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] 
                   forKey:@"status"];
 	
 	[self showTencentWeiboForm];

@@ -32,5 +32,4 @@
 
 
 @interface SHKNetEaseWeibo : SHKOAuthSharer <SHKFormControllerLargeTextFieldDelegate>
-- (void)followMe;
 @end

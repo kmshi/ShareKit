@@ -55,10 +55,15 @@
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
-- (BOOL)shortenURL;
+- (void)sendUserInfo;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data;
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
+
+- (void)shortenURL;
 - (void)shortenURLFinished:(SHKRequest *)aRequest;
 
 - (void)handleUnsuccessfulTicket:(NSData *)data;
+- (void)followMe;
 
 @end
 
@@ -104,10 +109,10 @@
 	return YES;
 }
 
-//+ (BOOL)canGetUserInfo
-//{
-//	return YES;
-//}
++ (BOOL)canGetUserInfo
+{
+	return YES;
+}
 
 #pragma mark -
 #pragma mark Configuration : Dynamic Enable
@@ -147,28 +152,29 @@
 
 - (void)show
 {
-    if (item.shareType == SHKShareTypeURL)
+    if (item.shareType == SHKShareTypeURL || item.URL.absoluteString.length>25)
 	{
 		[self shortenURL];
 	}
 	
-    else if (item.shareType == SHKShareTypeImage)
+    else if (item.shareType == SHKShareTypeImage || item.image != nil)
 	{
-        [item setCustomValue:item.title forKey:@"status"];
+        [item setCustomValue:item.title?item.title:item.text forKey:@"status"];
 		[self showNetEaseWeiboForm];
 	}
 	
-	else if (item.shareType == SHKShareTypeText)
-	{
-        [item setCustomValue:item.text forKey:@"status"];
-		[self showNetEaseWeiboForm];
-	}
-    
     else if (item.shareType == SHKShareTypeUserInfo)
 	{
 		[self setQuiet:YES];
 		[self tryToSend];
 	}
+    
+    else
+	{
+        [item setCustomValue:item.text forKey:@"status"];
+		[self showNetEaseWeiboForm];
+	}
+    
 }
 
 - (void)showNetEaseWeiboForm
@@ -196,12 +202,13 @@
 
 #pragma mark -
 
-- (BOOL)shortenURL
+- (void)shortenURL
 {
 	if (![SHK connected]||[SHKCONFIG(sinaWeiboConsumerKey) isEqualToString:@""] || SHKCONFIG(sinaWeiboConsumerKey) == nil)
 	{
-		[item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
-		return NO;
+		[item setCustomValue:[NSString stringWithFormat:@"%@ %@ ", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] forKey:@"status"];
+        [self showNetEaseWeiboForm];
+		return;
 	}
     
 	if (!quiet)
@@ -217,7 +224,6 @@
 											 method:@"GET"
 										  autostart:YES] autorelease];
     
-    return YES;
 }
 
 - (void)shortenURLFinished:(SHKRequest *)aRequest
@@ -237,11 +243,11 @@
                            otherButtonTitles:nil] autorelease] show];
     }
 
-    [item setCustomValue:[NSString stringWithFormat:@"%@ %@", item.title, item.URL.absoluteString] 
+    [item setCustomValue:[NSString stringWithFormat:@"%@ %@ ", item.title?item.title:item.text, [item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] 
                   forKey:@"status"];
 		
 	[self showNetEaseWeiboForm];
-	}
+}
 	
 
 #pragma mark -
@@ -263,21 +269,15 @@
 	if (![self validateItem])
 		return NO;
 	
-	switch (item.shareType) {
-			
-		case SHKShareTypeImage:            
-			[self sendImage];
-			break;
-			
-//		case SHKShareTypeUserInfo:            
-//			[self sendUserInfo];
-//			break;
-			
-		default:
-			[self sendStatus];
-			break;
-	}
-	
+	if (item.shareType == SHKShareTypeImage || item.image!=nil)            
+        [self sendImage];
+    
+    else if (item.shareType == SHKShareTypeUserInfo)           
+        [self sendUserInfo];
+    
+	else
+        [self sendStatus];
+		
 	// Notify delegate
 	[self sendDidStart];	
 	
@@ -327,18 +327,13 @@
 
 - (void)sendImage {
 	
-	NSURL *serviceURL = nil;
-	if([item customValueForKey:@"profile_update"]){
-		serviceURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/account/update_profile_image.json", API_DOMAIN]];
-	} else {
-		serviceURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/statuses/upload.json", API_DOMAIN]];
-	}
+	NSURL *serviceURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/statuses/upload.json", API_DOMAIN]];
 	
 	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
 																	consumer:consumer
 																	   token:accessToken
-																	   realm:API_DOMAIN
-														   signatureProvider:signatureProvider];
+																	   realm:nil
+														   signatureProvider:nil];
     [oRequest setHTTPMethod:@"POST"];
     
 	CGFloat compression = 0.9f;
@@ -361,12 +356,7 @@
 	[oRequest setValue:contentType forHTTPHeaderField:@"Content-Type"];
 	
 	NSMutableData *body = [NSMutableData data];
-	NSString *dispKey = @"";
-	if([item customValueForKey:@"profile_update"]){
-		dispKey = @"Content-Disposition: form-data; name=\"image\"; filename=\"upload.jpg\"\r\n";
-	} else {
-		dispKey = @"Content-Disposition: form-data; name=\"pic\"; filename=\"upload.jpg\"\r\n";
-	}
+	NSString *dispKey = @"Content-Disposition: form-data; name=\"pic\"; filename=\"upload.jpg\"\r\n";
     
 	[body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 	[body appendData:[dispKey dataUsingEncoding:NSUTF8StringEncoding]];
@@ -374,14 +364,10 @@
 	[body appendData:imageData];
 	[body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
 	
-//	if([item customValueForKey:@"profile_update"]){
-//		// no ops
-//	} else {
 //		[body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 //		[body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"status\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
 //		[body appendData:[[item customValueForKey:@"status"] dataUsingEncoding:NSUTF8StringEncoding]];
 //		[body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];	
-//	}
 	
 	[body appendData:[[NSString stringWithFormat:@"--%@--\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 	
@@ -405,21 +391,10 @@
 	if (ticket.didSucceed) {
 		[self sendDidFinish];
         
-        @try 
-        {
-            // Finished uploading Image, now need to posh the message and url in netease weibo
-            NSDictionary *result = [data objectFromJSONData];
-            [item setCustomValue:[NSString stringWithFormat:@"%@ %@",  [item customValueForKey:@"status"], [result objectForKey:@"upload_image_url"]]  
-                          forKey:@"status"];
-			
-        }
-        @catch (NSException *exception) {
-            [[[[UIAlertView alloc] initWithTitle:SHKLocalizedString(@"Upload image Error")
-                                         message:SHKLocalizedString(@"We could not upload the image.")
-                                        delegate:nil
-                               cancelButtonTitle:SHKLocalizedString(@"Continue")
-                               otherButtonTitles:nil] autorelease] show];
-        }
+        // Finished uploading Image, now need to posh the message and url in netease weibo
+        NSDictionary *result = [data objectFromJSONData];
+        [item setCustomValue:[NSString stringWithFormat:@"%@ %@",  [item customValueForKey:@"status"], [result objectForKey:@"upload_image_url"]]  
+                      forKey:@"status"];
         
         [self sendStatus];
 	} else {
@@ -430,6 +405,63 @@
 - (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error {
 	[self sendDidFailWithError:error];
 }
+
+- (void)sendUserInfo{
+    
+    OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@/account/verify_credentials.json",API_DOMAIN]]
+																	consumer:consumer
+																	   token:accessToken
+																	   realm:nil
+														   signatureProvider:nil];
+	
+	[oRequest setHTTPMethod:@"GET"];
+	
+	OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+																						  delegate:self
+																				 didFinishSelector:@selector(sendUserInfoTicket:didFinishWithData:)
+																				   didFailSelector:@selector(sendUserInfoTicket:didFailWithError:)];	
+	
+	[fetcher start];
+	[oRequest release];
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
+    if (ticket.didSucceed) {
+        NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+		NSDictionary* account = [dataString objectFromJSONString];
+        
+        //[[NSUserDefaults standardUserDefaults] setValue:account forKey:kSHKNetEaseWeiboUserInfo];
+        
+        SHKLog(@"account: %@",account);
+        
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:5];
+        [dict setValue:[account valueForKey:@"screen_name"] forKey:@"uid"];//id = "-6032672804846278856";
+        [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
+        [dict setValue:[account valueForKey:@"email"] forKey:@"email"];
+        [dict setValue:[account valueForKey:@"verified"] forKey:@"isvip"];
+        [dict setValue:[self sharerId] forKey:@"shareid"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
+		[self sendDidFinish];
+	}
+	else
+	{		
+		[self handleUnsuccessfulTicket:data];
+	}
+}
+
+- (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error{
+    [self sendDidFailWithError:error];
+}
+
+- (void)authDidFinish:(BOOL)success{
+    [super authDidFinish:success];
+    if (success) {
+        SHKItem* myitem = [SHKItem text:@""];
+        myitem.shareType = SHKShareTypeUserInfo;
+        [[self class] shareItem:myitem];
+    }
+}
+
 
 - (void)handleUnsuccessfulTicket:(NSData *)data
 {

@@ -324,11 +324,12 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 - (void)sendUserInfoTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data{
     if (ticket.didSucceed) {
         NSDictionary* account = [SHKXMLResponseParser objectFromXMLResponse:data];
-        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:5];
         [dict setValue:[account valueForKey:@"db:uid"] forKey:@"uid"];
         [dict setValue:[account valueForKey:@"title"] forKey:@"name"];
         //[dict setValue:[account valueForKey:@"uri"] forKey:@"email"];
         [dict setValue:[self sharerId] forKey:@"shareid"];
+        [dict setObject:@"userinfo" forKey:@"task"];
         [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
 		[self sendDidFinish];
 	}

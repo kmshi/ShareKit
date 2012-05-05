@@ -440,12 +440,13 @@
         
         SHKLog(@"account: %@",account);
         
-        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:5];
         [dict setValue:[account valueForKey:@"id"] forKey:@"uid"];
         [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
         //[dict setValue:[account valueForKey:@"uri"] forKey:@"email"];
         [dict setValue:[account valueForKey:@"verified"] forKey:@"isvip"];
         [dict setValue:[self sharerId] forKey:@"shareid"];
+        [dict setObject:@"userinfo" forKey:@"task"];
         [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
 		[self sendDidFinish];
 	}

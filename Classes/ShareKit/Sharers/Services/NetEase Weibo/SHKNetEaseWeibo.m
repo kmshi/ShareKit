@@ -434,12 +434,13 @@
         
         SHKLog(@"account: %@",account);
         
-        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:5];
+        NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:6];
         [dict setValue:[account valueForKey:@"screen_name"] forKey:@"uid"];//id = "-6032672804846278856";
         [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
         [dict setValue:[account valueForKey:@"email"] forKey:@"email"];
         [dict setValue:[account valueForKey:@"verified"] forKey:@"isvip"];
         [dict setValue:[self sharerId] forKey:@"shareid"];
+        [dict setObject:@"userinfo" forKey:@"task"];
         [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
 		[self sendDidFinish];
 	}

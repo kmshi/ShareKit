@@ -541,12 +541,13 @@
             //[[NSUserDefaults standardUserDefaults] setValue:account forKey:kSHKTencentWeiboUserInfo];
             
 			SHKLog(@"account: %@",account);
-            NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:4];
+            NSMutableDictionary * dict = [NSMutableDictionary dictionaryWithCapacity:6];
             [dict setValue:[account valueForKey:@"openid"] forKey:@"uid"];
             [dict setValue:[account valueForKey:@"name"] forKey:@"name"];
             [dict setValue:[account valueForKey:@"email"] forKey:@"email"];
             [dict setValue:[account valueForKey:@"isvip"] forKey:@"isvip"];
             [dict setValue:[self sharerId] forKey:@"shareid"];
+            [dict setObject:@"userinfo" forKey:@"task"];
             [[NSNotificationCenter defaultCenter] postNotificationName:SHKGetUserInfoNotification object:self userInfo:dict];
             [self sendDidFinish];
 		}else {

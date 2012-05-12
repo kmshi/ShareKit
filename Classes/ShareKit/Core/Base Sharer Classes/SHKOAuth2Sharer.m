@@ -117,10 +117,11 @@ expiresIn;
 	[self tokenAuthorize];
 }
 
+//Fix bug: we should store expirationDate instead of expiresIn
 - (void)storeRefreshToken{
     [SHK setAuthValue:self.refreshToken forKey:kOAuth2RefreshTokenKey forSharer:[self sharerId]];
     [SHK setAuthValue:self.accessToken forKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
-    [SHK setAuthValue:[self.expiresIn stringValue] forKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
+    [SHK setAuthValue:[[NSNumber numberWithDouble:[self.expirationDate timeIntervalSince1970]] stringValue] forKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
 }
 
 - (BOOL)restoreRefreshToken{
@@ -128,8 +129,8 @@ expiresIn;
     if (refreshToken) self.refreshToken = refreshToken;
     NSString* accessToken = [SHK getAuthValueForKey:kOAuth2AccessTokenKey forSharer:[self sharerId]];
     if (accessToken)  self.accessToken = accessToken;
-    NSString* expiresIn = [SHK getAuthValueForKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
-    if (expiresIn) self.expiresIn = [NSNumber numberWithInt:[expiresIn intValue]];
+    NSString* expiresDate = [SHK getAuthValueForKey:kOAuth2ExpiresInKey forSharer:[self sharerId]];
+    if (expiresDate) self.expirationDate = [NSDate dateWithTimeIntervalSince1970:[expiresDate doubleValue]];
     if (self.refreshToken) {
         return YES;
     }

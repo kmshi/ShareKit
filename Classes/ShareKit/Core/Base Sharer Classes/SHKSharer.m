@@ -30,6 +30,8 @@
 #import "SHKConfiguration.h"
 #import "SHKSharerDelegate.h"
 
+extern NSString* BakerLocalizedString(NSString* key, ...);
+
 @interface SHKSharer ()
 
 - (void)updateItemWithForm:(SHKFormController *)form;
@@ -733,14 +735,14 @@
     
     NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithCapacity:4];
     [dict setValue:[item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] forKey:@"url"];
-    [dict setValue:[item customValueForKey:@"status"] forKey:@"status"];
+    //[dict setValue:[item customValueForKey:@"status"] forKey:@"status"];
     [dict setValue:[self sharerId] forKey:@"sharerid"];
     [dict setValue:@"share" forKey:@"task"];
     
-    [SHK addCoins:2 withReason:dict];
+    [SHK addCoins:5 withReason:dict];
     
     if (!self.quiet) {
-        [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayGift:) withObject:@"You got 2 coins!" afterDelay:2];
+        [[SHKActivityIndicator currentIndicator] performSelector:@selector(displayGift:) withObject:BakerLocalizedString(@"You got %i coins!",5) afterDelay:2];
     }
 }
 

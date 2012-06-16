@@ -687,6 +687,7 @@ static NSDictionary *sharersDictionary = nil;
     NSInteger cur = [self getCoins];
     [self setCoins:(cur+num)];
     [userInfo setValue:[NSNumber numberWithInt:num] forKey:@"coins_added"];
+    [userInfo setValue:[NSNumber numberWithInt:(cur+num)] forKey:@"coins"];
     [[NSNotificationCenter defaultCenter] postNotificationName:CoinsUpdatedNotification object:nil userInfo:userInfo];
 }
 

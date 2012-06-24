@@ -156,8 +156,8 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
     
     rootView.text = [item customValueForKey:@"status"];
 	rootView.maxTextLength = 140;
-	rootView.image = item.image;
-	rootView.imageTextLength = 25;
+//	rootView.image = item.image;
+//	rootView.imageTextLength = 25;
 	
 	self.navigationBar.tintColor = SHKCONFIG_WITH_ARGUMENT(barTintForView:,self);
 	

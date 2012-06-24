@@ -361,8 +361,8 @@ static NSString *const kSHKDoubanUserInfo = @"kSHKDoubanUserInfo";
 }
 
 - (void)tokenAccessTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
-    NSString *responseBody = [[NSString alloc] initWithData:data
-                                                   encoding:NSUTF8StringEncoding];
+    NSString *responseBody = [[[NSString alloc] initWithData:data
+                                                   encoding:NSUTF8StringEncoding] autorelease];
     NSArray* array = [responseBody componentsSeparatedByString:@"&"];
     for (NSString* str in array) {
         NSRange range = [str rangeOfString:@"douban_user_id="];

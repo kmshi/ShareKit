@@ -246,17 +246,17 @@ expiresIn;
         self.expiresIn = nil;
     }
     
-    BOOL didRefreshTokenChange = NO;
-    NSString *refreshToken = [dict objectForKey:kOAuth2RefreshTokenKey];
-    if (refreshToken) {
-        NSString *priorRefreshToken = self.refreshToken;
-        
-        if (priorRefreshToken != refreshToken
-            && (priorRefreshToken == nil
-                || ![priorRefreshToken isEqual:refreshToken])) {
-                didRefreshTokenChange = YES;
-            }
-    }
+//    BOOL didRefreshTokenChange = NO;
+//    NSString *refreshToken = [dict objectForKey:kOAuth2RefreshTokenKey];
+//    if (refreshToken) {
+//        NSString *priorRefreshToken = self.refreshToken;
+//        
+//        if (priorRefreshToken != refreshToken
+//            && (priorRefreshToken == nil
+//                || ![priorRefreshToken isEqual:refreshToken])) {
+//                didRefreshTokenChange = YES;
+//            }
+//    }
     
     [self.parameters addEntriesFromDictionary:dict];
     [self updateExpirationDate];

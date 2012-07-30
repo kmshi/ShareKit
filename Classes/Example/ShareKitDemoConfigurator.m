@@ -40,6 +40,30 @@
  leaving that decision up to the user.
  */
 
+//Google+
+- (NSString*)googleplusConsumerKey{
+    return @"319700597613.apps.googleusercontent.com"; 
+}
+- (NSString*)googleplusConsumerSecret{
+    return @"D5aLQIO8AHJKnty8Agg_1DLQ";
+}
+- (NSString*)googleplusCallbackUrl{
+    return @"http://localhost"; 
+}
+
+//Tencent Weibo
+- (NSString*)tencentWeiboConsumerKey{
+    return @"801140124";
+}
+
+- (NSString*)tencentWeiboConsumerSecret{
+    return @"4a9334aeaf087245a998a357f9859089";
+}
+
+- (NSString*)tencentWeiboCallbackUrl{
+    return @"http://www.idearadar.org";
+}
+
 // Sina Weibo 
 - (NSString*)sinaWeiboConsumerKey {
 	return @"1631351849";
@@ -72,18 +96,18 @@
 // NetEase Weibo
 - (NSString*)netEaseWeiboConsumerKey
 {
-    return @"FP4aD8G9cEFNZEBv";
+    return @"zWtMOlesxaRpI2Vh";
 }
 
 - (NSString*)netEaseWeiboConsumerSecret
 {
-    return @"ZohrmWOBEnVC16jNWIEliXytq62f6xDh";
+    return @"huuX7nNUZJtwAjCSRiQpWVoPdqhUZJXZ";
 }
 
 // You need to set this if using OAuth (MUST be set "null")
 - (NSString*)netEaseWeiboCallbackUrl
 {
-    return @"null";
+    return @"http://www.idearadar.org";
 }
 
 // To use xAuth, set to 1
